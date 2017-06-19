@@ -35,10 +35,10 @@ class serialW:
 		try:
 			n = self.s.read(self.bytes)
 			if n:
-				return 'Device: ', self.device, ' is connected'
+				return 'P','Device: ', self.device, ' is connected'
 
 		except:
-			raise ConnectionError('Connection to ', self.d, ' failed.')
+			raise ConnectionError('F','Connection to ', self.d, ' failed.')
 
 if __name__ == "__main__":
 	p = serialW("/dev/ttyAMA0") #replace with correct device

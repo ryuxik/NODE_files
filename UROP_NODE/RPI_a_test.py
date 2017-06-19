@@ -30,7 +30,6 @@ if __name__ == "__main__":
 
 	fpga = flink.board(vid_pid, debug_level, None)
 
-
 	#Testing intial connection to bus
 	try:
 		#busONE.testConnection()
@@ -70,13 +69,15 @@ if __name__ == "__main__":
 	#Make tests using memmory map here!!
 	#or implement those tests as part of the connection tests
 
-
 	#print(results) #see results of tests
+
+	#Check for F at as the first element of every statement, if so, add it to list of failures
 	failures = [statement[1:] for statement in results if statement[0] == 'F']
+
+	#Check if all tests have passed
 	if len(failures) == 0:
 		testsPassed = True
 
-	
 	#store results in text file
 	f = open('results','w')
 	if testsPassed:
