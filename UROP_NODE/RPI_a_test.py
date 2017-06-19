@@ -8,6 +8,7 @@ import test.busComm as comm
 import test.fpga_link_test as flink
 
 if __name__ == "__main__":
+	testsPassed = False
 	vid_pid = 101 # replace with proper vendor and product id of FPGA board
 	debug_level = 0 #replace with desired debug level for fl API
 	busONE_directory = "b1" #replace with proper dir
@@ -36,42 +37,51 @@ if __name__ == "__main__":
 		r = fpga.init_com_test()
 		results.extend(r)
 	except:
-		results.append('Initial connection to bus failed')
+		results.append('F','Initial connection to bus failed')
 
 	#Testing switch of bus to slave
 	try:
 		#implement a slave test here!!
-		results.append('Switch of bus to slave successfull')
+		results.append('P','Switch of bus to slave successfull')
 	except:
-		results.append('Switch of bus to slave failed')
+		results.append('F','Switch of bus to slave failed')
 		
 	#Testing connection to bus as slave
 	try:
 		busTWO.testConnection()
-		results.append('Connection to bus as slave successfull')
+		results.append('P','Connection to bus as slave successfull')
 	except:
-		results.append('Connection to bus as slave failed')
+		results.append('F','Connection to bus as slave failed')
 
 	#Testing connection to camera
 	try:
 		cam.testConnection()
-		results.append('Connection to camera successfull')
+		results.append('P','Connection to camera successfull')
 	except:
-		results.append('Connection to camera failed')
+		results.append('F','Connection to camera failed')
 
 	#Testing connection to modulator
 	try:
 		mod.testConnection()
-		results.append('Connection to modulator successfull')
+		results.append('P','Connection to modulator successfull')
 	except:
-		results.append('Connection to modulator failed')
+		results.append('F','Connection to modulator failed')
 
 	#Make tests using memmory map here!!
 	#or implement those tests as part of the connection tests
 
-	print(results) #see results of tests
+
+	#print(results) #see results of tests
+	failures = [statement[1:] for statement in results if statement[0] == 'F']
+	if len(failures) == 0:
+		testsPassed = True
+
 	
+	#store results in text file
 	f = open('results','w')
-	for r in results:
-		f.write(r)
+	if testsPassed:
+		f.write('All tests passed')
+	else:
+		for r in failures:
+			f.write(r)
 	f.close()
