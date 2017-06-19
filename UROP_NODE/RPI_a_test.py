@@ -6,7 +6,6 @@
 """
 import test.busComm as comm
 import test.fpga_link_test as flink
-import fl
 
 if __name__ == "__main__":
 	vid_pid = 101 # replace with proper vendor and product id of FPGA board
