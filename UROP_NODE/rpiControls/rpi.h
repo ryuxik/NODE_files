@@ -1,3 +1,4 @@
+//From http://www.pieter-jan.com/node/15
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/types.h>

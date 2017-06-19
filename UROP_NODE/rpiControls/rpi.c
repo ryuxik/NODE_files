@@ -1,3 +1,4 @@
+//From http://www.pieter-jan.com/node/15
 #include "rpi.h"
 
 struct bcm2837_peripheral gpio = {GPIO_BASE};

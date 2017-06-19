@@ -68,12 +68,13 @@ class NodeFPGA(object):
 
         # Readback counters (two counters, each 8 bytes)
         resp = fl.flReadChannel(self.handle,self.FIFO_ASYNC_RD,24)
-        if self.DEBUG: print "Length of response:",len(resp)
-        if self.DEBUG: print [hex(a) for a in resp]
+        if self.DEBUG: print ("Length of response:",len(resp))
+        if self.DEBUG: print ([hex(a) for a in resp])
         (cycles,errors,ones) = struct.unpack(">QQQ",resp)
         ser = float(errors)/float(cycles)
 
-        if self.DEBUG: print "0x%016X 0x%016X 0x%016X SER = %e"%(cycles,errors,ones,ser)
+        if self.DEBUG: 
+            print ("0x%016X 0x%016X 0x%016X SER = %e"%(cycles,errors,ones,ser))
 
         return cycles,errors,ones,ser
 
@@ -98,12 +99,15 @@ class NodeFPGA(object):
 
         # Readback counters (two counters, each 8 bytes)
         resp = fl.flReadChannel(self.handle,self.FIFO_ASYNC_RD,24)
-        if self.DEBUG: print "Length of response:",len(resp)
-        if self.DEBUG: print [hex(a) for a in resp]
+        if self.DEBUG: 
+            print ("Length of response:",len(resp))
+        if self.DEBUG: 
+            print ([hex(a) for a in resp])
         (cycles,errors,ones) = struct.unpack(">QQQ",resp)
         ser = float(errors)/float(cycles)
 
-        if self.DEBUG: print "0x%016X 0x%016X 0x%016X SER = %e"%(cycles,errors,ones,ser)
+        if self.DEBUG: 
+            print ("0x%016X 0x%016X 0x%016X SER = %e"%(cycles,errors,ones,ser))
 
         return cycles,errors,ones,ser
 
@@ -137,16 +141,20 @@ class NodeFPGA(object):
 
             P1 = float(ones)/float(cycles)
 
-            if debug: print "  %2i %4i"%(i,midpoint),
+            if debug: 
+                print ("  %2i %4i"%(i,midpoint))
 
             if P1 < targetP1:
                 last = midpoint-1
-                if debug: print "<",
+                if debug: 
+                    print ("<")
             else:
                 first = midpoint+1
-                if debug: print ">",
+                if debug: 
+                    print (">")
 
-            if debug: print P1
+            if debug: 
+                print (P1)
 
             i += 1
 
@@ -270,7 +278,7 @@ class NodeFPGA(object):
         fl.flWriteChannel(self.handle,resetchannel,0x01) # reset flags in FPGA
         time.sleep(0.02)
         flag = fl.flReadChannel(self.handle, statuschannel) # read out flag in FPGA
-        print flag  # Print out value for flag - value of 0 shows that flags are cleared
+        print (flag)  # Print out value for flag - value of 0 shows that flags are cleared
         end_reset = time.time() # determine time to perform reset
                 # write data to virtual channel in FPGA
         for packet in data_packets:

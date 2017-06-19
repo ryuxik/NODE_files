@@ -1,3 +1,4 @@
+//From http://www.pieter-jan.com/node/15
 #include "RPI.h"
 //example code that would blink an led using pin 7 which is gpio 4, 
 //refer to pinout to select a pin in general
