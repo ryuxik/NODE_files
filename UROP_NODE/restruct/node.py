@@ -249,8 +249,8 @@ class NodeFPGA(object):
 	#inputs: channel to write data to, trackingbyte (byte that commands 
 	#modulator to enter tracking mode), and ppm order
 	#outputs: terminal string
-	print("Putting modulator into tracking mode for ppm order %d." % ppm_order)
-	fl.flWriteChannel(self.handle,writechannel,bytearray([trackingbyte]))
+	   print("Putting modulator into tracking mode for ppm order %d." % ppm_order)
+	   fl.flWriteChannel(self.handle,writechannel,bytearray([trackingbyte]))
 
     def loadDataFile(self,dataFile,num_bytes):
 	#inputs: name of file to load, number of bytes in each packet written to FPGA
