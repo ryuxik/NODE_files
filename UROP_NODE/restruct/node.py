@@ -68,8 +68,10 @@ class NodeFPGA(object):
 
         # Readback counters (two counters, each 8 bytes)
         resp = fl.flReadChannel(self.handle,self.FIFO_ASYNC_RD,24)
-        if self.DEBUG: print ("Length of response:",len(resp))
-        if self.DEBUG: print ([hex(a) for a in resp])
+        if self.DEBUG: 
+            print ("Length of response:",len(resp))
+        if self.DEBUG: 
+            print ([hex(a) for a in resp])
         (cycles,errors,ones) = struct.unpack(">QQQ",resp)
         ser = float(errors)/float(cycles)
 
@@ -264,7 +266,7 @@ class NodeFPGA(object):
 	return data_packets
 
     def writeFile(self,writechannel,resetchannel,statuschannel,data_packets,delay,vp):
-        # inputs: channel to write data to, channel to reset (writes to this
+    # inputs: channel to write data to, channel to reset (writes to this
 	# channel reset modulator), channel to read back status flags, data_packets as a list of
 	# bytearrays, delay between writing packets,FPGA identifier (vp)
 	# outputs: writes to FPGA and writes to terminal
