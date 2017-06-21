@@ -21,7 +21,6 @@ if __name__ == "__main__":
 	results = [] #array containing test results
 
 	#Making instances of necessary connections for test
-	#these are using serial, may want to use fl instead
 	busONE = comm.serialW(busONE_directory,True)
 	busTWO = comm.serialW(busONE_directory)
 	cam = comm.serialW(camera_directory)

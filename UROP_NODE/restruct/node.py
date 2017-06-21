@@ -43,6 +43,7 @@ class NodeFPGA(object):
         fl.flWriteChannel(self.handle,self.FIFO_GPIO_WR,bytearray([0xFF]))
 
     def initDAC(self):
+        # >BH indicates big-endian, unsigned char(1 byte), unsigned short(2 bytes)
         spi_bytes = struct.pack(">BH",self.DAC_CMD_SEL_INTERNAL_REF,0)
         self.SPI_write(spi_bytes)
 
@@ -50,6 +51,7 @@ class NodeFPGA(object):
         dacval = (value<<4)
         dacval &= 0xFFFF
         CMD_WRITE_AND_UPDATE = 0x30 #unclear what this line does
+        # >BH indicates big-endian, unsigned char(1 byte), unsigned short(2 bytes)
         spi_bytes = struct.pack(">BH",self.DAC_CMD_WRITE_AND_UPDATE,dacval)
         self.SPI_write(spi_bytes)
 
@@ -72,6 +74,7 @@ class NodeFPGA(object):
             print ("Length of response:",len(resp))
         if self.DEBUG: 
             print ([hex(a) for a in resp])
+        #>QQQ is big-endian, and 3 unsigned long long (8 bytes each)
         (cycles,errors,ones) = struct.unpack(">QQQ",resp)
         ser = float(errors)/float(cycles)
 
@@ -105,6 +108,7 @@ class NodeFPGA(object):
             print ("Length of response:",len(resp))
         if self.DEBUG: 
             print ([hex(a) for a in resp])
+        #>QQQ is big-endian, and 3 unsigned long long (8 bytes each)
         (cycles,errors,ones) = struct.unpack(">QQQ",resp)
         ser = float(errors)/float(cycles)
 
@@ -171,13 +175,14 @@ class NodeFPGA(object):
         #Depreciated command! Only use if using old FPGA image!
         self.M = M
 
+        #>H big-endian unsigned short (2 bytes)
         binval = struct.pack(">H",M)
         fl.flWriteChannel(self.handle,self.FIFO_ASYNC_WR,bytearray([0x80,0x00,binval[0]]))
         fl.flWriteChannel(self.handle,self.FIFO_ASYNC_WR,bytearray([0x80,0x01,binval[1]]))
 
-        # Configure the PRBS bits-per-symbol, regardless of whether PRBS is active
-        self.setBitsPerSymbol()
+        # Configure the PRBS bits-per-symbol, regardless of whether PRBS is active()
 
+        self.setBitsPerSymbol
     def setBitsPerSymbol(self,bps=None):
         """ Sets the number of PRBS bits per symbol. If not specified, calculate from M."""
         if bps==None:
@@ -246,32 +251,32 @@ class NodeFPGA(object):
         return (delay,num_bytes,trackingbyte)
 
     def setTrackingMode(self,writechannel,trackingbyte,ppm_order):
-	#inputs: channel to write data to, trackingbyte (byte that commands 
-	#modulator to enter tracking mode), and ppm order
-	#outputs: terminal string
-	   print("Putting modulator into tracking mode for ppm order %d." % ppm_order)
-	   fl.flWriteChannel(self.handle,writechannel,bytearray([trackingbyte]))
+        #inputs: channel to write data to, trackingbyte (byte that commands 
+    	#modulator to enter tracking mode), and ppm order
+    	#outputs: terminal string
+        print("Putting modulator into tracking mode for ppm order %d." % ppm_order)
+        fl.flWriteChannel(self.handle,writechannel,bytearray([trackingbyte]))
 
     def loadDataFile(self,dataFile,num_bytes):
-	#inputs: name of file to load, number of bytes in each packet written to FPGA
-	#outputs: list of byte arrays containing data from file
-	
-	# format data in list of bytearrays (where each bytearray contains a packet of data) for
-	# writing to FPGA
+    	#inputs: name of file to load, number of bytes in each packet written to FPGA
+    	#outputs: list of byte arrays containing data from file
+    	
+    	# format data in list of bytearrays (where each bytearray contains a packet of data) for
+    	# writing to FPGA
         with open(dataFile,'rb') as f:
             data = f.read()
         data = [ord(byte) for byte in data]
         num_packets = int(math.ceil(len(data)/num_bytes))
         data_packets = [bytearray(data[i*num_bytes:(i+1)*num_bytes]) for i in range(num_packets)]  
-	return data_packets
+        return data_packets
 
     def writeFile(self,writechannel,resetchannel,statuschannel,data_packets,delay,vp):
-    # inputs: channel to write data to, channel to reset (writes to this
-	# channel reset modulator), channel to read back status flags, data_packets as a list of
-	# bytearrays, delay between writing packets,FPGA identifier (vp)
-	# outputs: writes to FPGA and writes to terminal
+        # inputs: channel to write data to, channel to reset (writes to this
+    	# channel reset modulator), channel to read back status flags, data_packets as a list of
+    	# bytearrays, delay between writing packets,FPGA identifier (vp)
+    	# outputs: writes to FPGA and writes to terminal
 
-	# reset channel is 0x08, read channel is 0x05
+    	# reset channel is 0x08, read channel is 0x05
 
         # initiate list for saving write times
         wholetime = []
@@ -341,7 +346,7 @@ class NodeFPGA(object):
         print('file sent')
         
     def writeFileNTimes(self,writechannel,resetchannel,statuschannel,data_packets,delay,vp,N):
-	count = 0
-	while count < N:
-	    self.writeFile(writechannel,resetchannel,statuschannel,data_packets,delay,vp)
-	    count += 1
+    	count = 0
+    	while count < N:
+    	    self.writeFile(writechannel,resetchannel,statuschannel,data_packets,delay,vp)
+    	    count += 1
