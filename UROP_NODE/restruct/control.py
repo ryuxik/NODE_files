@@ -116,6 +116,22 @@ def configure(argList, isNeroCapable, handle, vp):
         else:
             raise fl.FLException("Device program requested but device at {} does not support NeroProg".format(vp))
 
+#writes bin data to fpga
+def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, N, num_bytes):
+    if argList.f:
+        dataFile = argList.f[0]
+        try:
+            data_packets = fpga.loadDataFile(dataFile,num_bytes)
+        except:
+            raise NameError('Must input a PPM order or wrong name of file')
+        if argList.N:
+            N = int(argList.N[0])
+            fpga.writeFileNTimes(writechannel,resetchannel,statuschannel,data_packets,writedelay,vp,N)
+            fpga.setTrackingMode(writechannel,trackingbyte,M) # quick hack, but should be doing tracking mode after a frame already
+        else:
+            fpga.writeFile(writechannel,resetchannel,statuschannel,data_packets,writedelay,vp)
+            fpga.setTrackingMode(writechannel,trackingbyte,M) # quick hack, but should be doing tracking mode after a frame already
+
 #need to import optimizing function
 #HERE!!!
 def opt_alg(argList, fpga):
