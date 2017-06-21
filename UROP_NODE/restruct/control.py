@@ -34,10 +34,12 @@ import sys
 import math as m
 from bench import LaserController
 
-DEBUG = False
+#Also not sure where this DEBUG is used
+#DEBUG = False
 
-# FPGA image, must update with new directory/ host on rpi cm3!!!!
-FPGA_IMAGE = "/home/kingryan/Dropbox/grad_school/fpga/makestuff/hdlmake/apps/roamingryan/swled/bist/vhdl/top_level.xsvf"
+# FPGA image, must update with new directory/ host on rpi cm3!!!
+# Actually, not sure what where this is used 
+#FPGA_IMAGE = "/home/kingryan/Dropbox/grad_school/fpga/makestuff/hdlmake/apps/roamingryan/swled/bist/vhdl/top_level.xsvf"
 
 # File-reader which yields chunks of data
 def readFile(fileName):
@@ -425,7 +427,6 @@ def code2voltage(c):
 
 #main function of the old SPI_test
 def SPImain():
-	
 	argList = get_args()
 	handle = fl.FLHandle()
 	try:
@@ -501,13 +502,12 @@ def SPImain():
 
 	        #reading temp
 	        bytes__meas = read_SPI(handle, [116,117]) #read ADC value
-	        code_meas = bytes_meas[1]*256 + bytes_meas[0]#convert bytes to double
+	        code_meas = bytes_meas[1]*256 + bytes_meas[0] #convert bytes to double
 			V_meas = code2voltage(code_meas) #convert ADC to voltage
 
 	        R_t = R_known * (Vcc/V_meas - 1)
 	        T = B/m.log(R_t/R_0 * m.exp(-B/T_0))
 	        print ("Temp read: ", T)
-
 
 	        #Test reading from RTD
 	        A = 3.81e-3 #from datasheet
@@ -529,7 +529,6 @@ def SPImain():
 #main fucnition of the old nodectr_oven_test
 def NODECTRLmain():
     argList = get_args()
-    print (argList)
     handle = fl.FLHandle()
     try:
         fl.flInitialise(0)
