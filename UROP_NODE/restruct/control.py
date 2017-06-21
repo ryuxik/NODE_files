@@ -132,7 +132,7 @@ def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writ
             fpga.writeFile(writechannel,resetchannel,statuschannel,data_packets,writedelay,vp)
             fpga.setTrackingMode(writechannel,trackingbyte,M) # quick hack, but should be doing tracking mode after a frame already
 
-#need to import optimizing function
+#need to import optimizing function instead of having this mess
 #HERE!!!
 def opt_alg(argList, fpga):
     if argList.ser:
@@ -425,23 +425,11 @@ def code2voltage(c):
 
 #main function of the old SPI_test
 def SPImain():
-	print("NODE FPGA SPI Commander\n")
-	parser = argparse.ArgumentParser(description='Load FX2LP firmware, load the FPGA, interact with the FPGA.')
-	parser.add_argument('-i', action="store", nargs=1, metavar="<VID:PID>", help="vendor ID and product ID (e.g 1443:0007)")
-	parser.add_argument('-v', action="store", nargs=1, required=True, metavar="<VID:PID>", help="VID, PID and opt. dev ID (e.g 1D50:602B:0001)")
-	#parser.add_argument('-d', action="store", nargs=1, metavar="<port+>", help="read/write digital ports (e.g B13+,C1-,B2?)")
-	parser.add_argument('-q', action="store", nargs=1, metavar="<jtagPorts>", help="query the JTAG chain")
-	parser.add_argument('-p', action="store", nargs=1, metavar="<config>", help="program a device")
-	parser.add_argument('-c', action="store", nargs=1, metavar="<conduit>", help="which comm conduit to choose (default 0x01)")
-	parser.add_argument('-f', action="store", nargs=1, metavar="<dataFile>", help="binary data to write to channel 0")
-	argList = parser.parse_args()
-
-	print (argList)
-
+	
+	argList = get_args()
 	handle = fl.FLHandle()
 	try:
 	    fl.flInitialise(0)
-
 	    vp = argList.v[0]
 	    print("Attempting to open connection to FPGALink device {}...".format(vp))
 	    try:
