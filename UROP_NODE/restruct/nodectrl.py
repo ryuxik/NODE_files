@@ -111,7 +111,7 @@ def configure(argList, isNeroCapable, handle, vp):
             raise fl.FLException("Device program requested but device at {} does not support NeroProg".format(vp))
 
 #writes bin data to fpga
-def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, N, num_bytes):
+def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, M, num_bytes):
     if argList.f:
         dataFile = argList.f[0]
         try:
@@ -209,7 +209,7 @@ def main():
                 print (" ones   = 0x%-12X target=0x%-12X"%(ones,cycles/M))
                 print (" SlotER = %e"%(ser))
         
-            data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, N, num_bytes)
+            data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, M, num_bytes)
         
     except fl.FLException as ex:
         print(ex)

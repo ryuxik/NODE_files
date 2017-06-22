@@ -33,7 +33,7 @@ from node import NodeFPGA
 import sys
 import math as m
 from bench import LaserController
-import optimizer 
+from optimizer import Optimizer
 
 #Also not sure where this DEBUG is used
 #DEBUG = False
@@ -42,8 +42,15 @@ import optimizer
 # Actually, not sure what where this is used 
 #FPGA_IMAGE = "/home/kingryan/Dropbox/grad_school/fpga/makestuff/hdlmake/apps/roamingryan/swled/bist/vhdl/top_level.xsvf"
 
-# File-reader which yields chunks of data
 def readFile(fileName):
+    """
+    File-reader which yields chunks of data
+
+    Args:
+        fileName(string): name of file to read
+    Yields:
+        chunk(string): data read from file opened
+    """
     with open(fileName, "rb") as f:
         while True:
             chunk = f.read(32768)
@@ -52,8 +59,15 @@ def readFile(fileName):
             else:
                 break
 
-#gets neccessary args to communicate and program FPGA board, maybe replace so that it runs straight from rpi
+
 def get_args():
+    """
+    Gets neccessary args to communicate and program FPGA board.
+    ## Maybe replace so that it gets these arguments from the proper place using modes
+
+    Returns:
+        argList(namespace): populated namespace object
+    """
     parser = argparse.ArgumentParser(description='Load FX2LP firmware, load the FPGA, interact with the FPGA.')
     parser.add_argument('-i', action="store", nargs=1, metavar="<VID:PID>", help="vendor ID and product ID (e.g 1443:0007)")
     parser.add_argument('-v', action="store", nargs=1, required=True, metavar="<VID:PID>", help="VID, PID and opt. dev ID (e.g 1D50:602B:0001)")
@@ -71,8 +85,20 @@ def get_args():
     argList = parser.parse_args()
     return argList
 
-#handles ids when flOpen fails
+
 def ids(vp, argList):
+    """
+    Handles opening connection to FPGA board when flOpen fails initially. Also loads standard firmware using device id
+
+    Args:
+        vp(): vendor ID and product ID
+        argList(namespace): populated namespace object
+
+    Returns:
+        An opaque reference to an internal structure representing the connection.
+        This must be freed at some later time by a call to \c flClose(), or a resource-leak will ensue.
+
+    """
     if argList.i:
         ivp = argList.i[0]
         print("Loading firmware into {}...".format(ivp))
@@ -88,15 +114,30 @@ def ids(vp, argList):
     else:
         raise fl.FLException("Could not open FPGALink device at {} and no initial VID:PID was supplied".format(vp))
 
-#selects conduit and checks if the FPGA board is nero capable and capable of communication 
 def conduit_selection(argList_c=1):
+    """
+    Selects conduit and checks if the FPGA board is nero capable and capable of communication.
+
+    Args:
+        argList_c(int): comm conduit to chose
+    Returns:
+        (tuple): booleans indicating if device is nero capable and comm capable
+    """
     isNeroCapable = fl.flIsNeroCapable(handle)
     isCommCapable = fl.flIsCommCapable(handle, conduit)
     fl.flSelectConduit(handle, conduit)
     return (isNeroCapable, isCommCapable)
 
-#tests the JTAG chain
 def jtag_chain(isNeroCapable, argList, vp, handle):
+    """
+    Tests the JTAG chain.
+
+    Args:
+        isNeroCapable(boolean): indicated if device is nero capable
+        argList(namespace): populated namespaced object with necessary args
+        vp(): vendor and product ID
+        handle: An opaque reference to an internal structure representing the connection.
+    """
     if argList.q:
         if isNeroCapable:
             chain = fl.jtagScanChain(handle, argList.q[0])
@@ -109,8 +150,16 @@ def jtag_chain(isNeroCapable, argList, vp, handle):
         else:
             raise fl.FLException("JTAG chain scan requested but FPGALink device at {} does not support NeroJTAG".format(vp))
 
-#configures FPGA board with selected program
 def configure(argList, isNeroCapable, handle, vp):
+    """
+    Configures FPGA board with selected program.
+
+    Args:
+        argList(namespace): populated namespaced object with necessary args
+        isNeroCapable(boolean): indicated if device is nero capable
+        handle: An opaque reference to an internal structure representing the connection.
+        vp(): vendor and product ID
+    """
     if argList.p:
         progConfig = argList.p[0]
         print("Programming device with config {}...".format(progConfig))
@@ -119,8 +168,21 @@ def configure(argList, isNeroCapable, handle, vp):
         else:
             raise fl.FLException("Device program requested but device at {} does not support NeroProg".format(vp))
 
-#writes bin data to fpga
-def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, N, num_bytes):
+
+def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, M, num_bytes):
+    """
+    Writes binary data to FPGA board.
+
+    Args:
+        argList(namespace): populated namespaced object with necessary args
+        fpga(NodeFPGA): object representing FPGA board
+        writechannel(int): conduit to use for writing to board
+        resetchannel(int): conduit to use for reset to board
+        statuschannel(int): channel to use for reading status from board
+        writedelay(float): delay for writing used when writing files to board
+        vp(): vendor and product ID 
+        M(int): ppm order
+    """
     if argList.f:
         dataFile = argList.f[0]
         try:
@@ -135,21 +197,31 @@ def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writ
             fpga.writeFile(writechannel,resetchannel,statuschannel,data_packets,writedelay,vp)
             fpga.setTrackingMode(writechannel,trackingbyte,M) # quick hack, but should be doing tracking mode after a frame already
 
-
-def get_Optimizer(handle, fpga):
-    """
-    Returns Optimizer object which has all the functions
-    necessary for the optimization of the laser temp and power 
-    """
-    return optimizer.Optimizer(handle, fpga)
-
 def update_SPI(handle, channels, byte_array):
+    """
+    Updates SPI
+
+    Args:
+        handle: An opaque reference to an internal structure representing the connection.
+        channels(list): channles to be used as conduits
+        byte_array(list): list of bytes
+    """
     MSB_channel = channels[0]
     LSB_channel = channels[1]
     fl.flWriteChannel(handle, MSB_channel, byte_array[0])
     fl.flWriteChannel(handle, LSB_channel, byte_array[1])
 
 def read_SPI(handle, channels):
+    """
+    Reads the SPI
+
+    Args:
+        handle: An opaque reference to an internal structure representing the connection.
+        channels(list): channles to be used as conduits
+
+    Returns:
+        (list): rxm and rxl read from channels specified
+    """
     MSB_channel = channels[0]
     LSB_channel = channels[1]
     rxm = fl.flReadChannel(handle, MSB_channel)
@@ -206,12 +278,12 @@ def SPImain():
 
 	    if isCommCapable and fl.flIsFPGARunning(handle):
 	        fpga = NodeFPGA(handle)
-            opt = get_Optimizer(handle, fpga)
+            opt = Optimizer(handle, fpga)
 	        #Test setting LD Bias to 0.150A (channels 26, 27)
 
-            opt.setCurrent(0.150)
+            #opt.setCurrent(0.150)
+            #this section of code looks like setLaserCurrent()
 
-            ####HERE
 	        curr = 0.150
 	        code = curr/(4.096*1.1*((1/6.81)+(1/16500)))*4096
 	        first_byte, second_byte = opt.code2bytes(code)
@@ -233,14 +305,14 @@ def SPImain():
 	        #writing temp 35C
 	        T = 35
 	        V_set = Vcc/(((m.exp(B/T)*(R_0 * m.exp(-B/T_0)))/R_known)+1)
-	        V_code = voltage2code(V_set) #convert voltage to code
-	        fb, sb = code2byte(V_code) #convert code to bytes
+	        V_code = opt.voltage2code(V_set) #convert voltage to code
+	        fb, sb = opt.code2byte(V_code) #convert code to bytes
 	        update_SPI(handle, [23,24], [fb, sb])
 
 	        #reading temp
 	        bytes__meas = read_SPI(handle, [116,117]) #read ADC value
 	        code_meas = bytes_meas[1]*256 + bytes_meas[0] #convert bytes to double
-			V_meas = code2voltage(code_meas) #convert ADC to voltage
+			V_meas = opt.code2voltage(code_meas) #convert ADC to voltage
 
 	        R_t = R_known * (Vcc/V_meas - 1)
 	        T = B/m.log(R_t/R_0 * m.exp(-B/T_0))
@@ -252,7 +324,7 @@ def SPImain():
 	        R_t0 = 1000
 	        T_bm = read_SPI(handle, [104,105]) #temp code measured
 			T_cm = 256*T_bm[1] + T_bm[0] #convert bytes to double
-	        T_meas = code2voltage(T_cm) #convert ADC to voltage
+	        T_meas = opt.code2voltage(T_cm) #convert ADC to voltage
 	        R_T = R_known * (Vcc/T_meas - 1)
 	        C = 1 -( R_T/R_t0)
 	        T_R = (-A + (A**2-(4*B*C))**0.5) / (2*B)
@@ -264,7 +336,6 @@ def SPImain():
 	    fl.flClose(handle)
 
 #main fucnition of the old nodectr_oven_test
-#fix so this uses Optimizer object if needed
 def NODECTRLmain():
     argList = get_args()
     handle = fl.FLHandle()
@@ -291,11 +362,20 @@ def NODECTRLmain():
         if isCommCapable and fl.flIsFPGARunning(handle):
 
             fpga = NodeFPGA(handle)
+            # define channels
+            writechannel = 0x02
+            statuschannel = 0x05
+            resetchannel = 0x08
+
+            writedelay,num_bytes,trackingbyte = fpga.setModulatorParams(M)
 
             if argList.ppm:
                 M = int(eval(argList.ppm[0]))
                 print ("Setting PPM order to: ",M)
                 fpga.setPPM_M(M)
+
+            if not argList.f:
+                fpga.setTrackingMode(writechannel,trackingbyte,M)
 
             if argList.txdel:
                 delay = int(eval(argList.txdel[0]))
@@ -321,8 +401,18 @@ def NODECTRLmain():
                 peakDAC = fpga.binSearchPeak(M,target=1.0/M,obslength=obslength)
                 print ("  DAC = %i"%peakDAC)
 
+            if argList.ser:
+                obslength = float(argList.ser)
+                print ("Measuring slot error rate...")
+                cycles,errors,ones,ser = fpga.measureSER(obslength=obslength)
+                print (" cycles = 0x%-12X"%(cycles))
+                print (" errors = 0x%-12X"%(errors))
+                print (" ones   = 0x%-12X target=0x%-12X"%(ones,cycles/M))
+                print (" SlotER = %e"%(ser))
+
+            data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, M, num_bytes)
             #alg testing goes here, but alg is not up to date!!
-            opt_alg(argList, fpga)
+            #opt_alg(argList, fpga)
             
     except fl.FLException as ex:
         print(ex)
