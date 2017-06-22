@@ -61,7 +61,7 @@ def main():
             writedelay,num_bytes,trackingbyte = fpga.setModulatorParams(M)
 
             if not argList.f:
-                    fpga.setTrackingMode(writechannel,trackingbyte,M)
+                fpga.setTrackingMode(writechannel,trackingbyte,M)
 
             if argList.txdel:
                 delay = int(eval(argList.txdel[0]))
