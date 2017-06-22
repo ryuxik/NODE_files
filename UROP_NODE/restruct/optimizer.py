@@ -102,7 +102,7 @@ class Optimizer(object):
         code_meas = rxm*256 + rxl           #byte to code
         V_meas = self.code2voltage(code_meas)
 
-
+        #Converts voltage to temperature
         R_t = R_known * (Vcc/V_meas - 1)
         T = B/m.log(R_t/R_0 * m.exp(-B/T_0))
 
