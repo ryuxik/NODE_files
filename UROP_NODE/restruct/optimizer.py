@@ -1,5 +1,4 @@
 #Wavelength Alignment Functions
-#I added a bunch of comments and tried to fix some of the code, but I am not very familiar with this file
 
 import fl
 import time
@@ -44,23 +43,23 @@ class Optimizer(object):
      #TODO: May need to update the SPI channels
 
     def setLaserCurrent(self, comm_current):
-        MSB_channel = 26        #what are MSB and LSB?
-        LSB_channel = 27
-        #Convert commanded current to bytes
+        
+        #Current Consumption
+        MSB_channel = 26    #LCCa
+        LSB_channel = 27    #LCCb
 
-        ##current variable comes from nowhere will cause error, unclear if it is
-        ##supposed to be self.current, or comm_current 
-        code = current/(4.096*1.1*((1/6.81)+(1/16500)))*4096
+        #Convert commanded current to bytes
+        code = comm_current/(4.096*1.1*((1/6.81)+(1/16500)))*4096
         first_byte, second_byte = self.code2bytes(code)
 
         fl.flWriteChannel(self.handle,MSB_channel,first_byte)      #writes bytes to channel
         fl.flWriteChannel(self.handle,LSB_channel,second_byte)
 
     def setLaserTemp(self, comm_temp):
-        ## argument in this function does nothing 
         
-        MSB_channel = 23
-        LSB_channel = 24
+        #Temp Set Point
+        MSB_channel = 23    #LTSa  
+        LSB_channel = 24    #LTSb
 
         #TODO Constants are estimated; may need to verify with vendor
         R_known = 10000
@@ -68,9 +67,9 @@ class Optimizer(object):
         B = 3900
         R_0 = 10000
         T_0 = 25 
-        #writing temp 35C
-        T = 35
-        V_set = Vcc/(((m.exp(B/T)*(R_0 * m.exp(-B/T_0)))/R_known)+1)
+        
+        #converts input/commanded temp (comm_temp) to voltage
+        V_set = Vcc/(((m.exp(B/comm_temp)*(R_0 * m.exp(-B/T_0)))/R_known)+1)
         V_code = self.voltage2code(V_set) #convert voltage to code
         fb, sb = self.code2byte(V_code) #convert code to bytes
         
@@ -79,18 +78,23 @@ class Optimizer(object):
 
 
     def getLaserCurrent(self):
-        MSB_channel = 100
-        LSB_channel = 101
+
+        #Current Consumption 3
+        MSB_channel = 100   #CC3a
+        LSB_channel = 101   #CC3b
 
         rxm = fl.flReadChannel(self.handle, MSB_channel)
         rxl = fl.flReadChannel(self.handle, LSB_channel)
 
-        return (rxm*256 + rxl)/4096 * (4.096*1.1*((1/6.81)+(1/16500)))  #above eq solved for curr
+        #converts the bytes read to a current value
+        return (rxm*256 + rxl)/4096 * (4.096*1.1*((1/6.81)+(1/16500)))
 
 
     def getLaserTemp(self):
-        MSB_channel = 116
-        LSB_channel = 117
+
+        #Measured Temp
+        MSB_channel = 116   #LTMa
+        LSB_channel = 117   #LTMb
         
         rxm = fl.flReadChannel(self.handle,MSB_channel)
         rxl = fl.flReadChannel(self.handle,LSB_channel)
@@ -99,7 +103,7 @@ class Optimizer(object):
         V_meas = self.code2voltage(code_meas)
 
 
-        R_t = R_known * (Vcc/V_meas - 1)        #reversed calculations from setLaserTemp, converts voltage to temp?
+        R_t = R_known * (Vcc/V_meas - 1)
         T = B/m.log(R_t/R_0 * m.exp(-B/T_0))
 
         return T
@@ -122,26 +126,24 @@ class Optimizer(object):
 
     """ Functions for alignment algorithm """
 
-    # A lot of this code is unclear, some arguments passed into functions, like current into setLaserCurrent, do nothing
     # Scan mode assumes no known operating setpoint and outputs an operating point using hill-climbing search for temp and bias_current
-    def scan_mode(self,obslength):
+    def scan_mode(self, obslength):
         #obslength from float(argList.peak) in Ryan's Code
 
         ###scan mode###
 		current = 125
-		##not sure about this line, the argument does nothing,
+
         self.setLaserCurrent(current)  
 
 		time.sleep(2)
         #adjusts current if laser current is more than +/- 0.1 from current, continues until current settles w/o changing after sleep
-		while not (current - 0.1 <= round(self.getLaserCurrent(),1) <= current + 0.1):     
-			##not sure about this line, the argument does nothing,
+		while not (current - 0.1 <= round(self.getLaserCurrent(),1) <= current + 0.1):
+
             self.setLaserCurrent(current)                                                  
 			time.sleep(1)
 
 		temp = 38
 
-        ##argument to this function does nothing, maybe meant setTemp()?
 		self.setLaserTemp(temp)
 		time.sleep(2)
         #waits until laser temperature is equal to temp, continues until temp settles w/o changing after sleep
@@ -154,14 +156,14 @@ class Optimizer(object):
 		print("New temperature: %f, new current: %f"%(temp, current))
 		print("Measuring slot error rate...")
 
-        ##obslength is not defined, this will cause an error
 		cycles,errors,ones,ser = self.fpga.measureSER(obslength=obslength)
 		#f.write(str(datetime.now())+','+str(temp)+','+str(current)+','+str(ser)+'\n')
 		print(" cycles = 0x%-12X"%(cycles))
 		print(" errors = 0x%-12X"%(errors))
 
-        ## M is not defined, will cause an error, where is it supposed to come from?
-		print(" ones   = 0x%-12X target=0x%-12X"%(ones,cycles/M))
+        #M is not defined here, it is calculated in the main control
+        #not sure if we need this print statement anyway
+		#print(" ones   = 0x%-12X target=0x%-12X"%(ones,cycles/M))
 		print(" SlotER = %e"%(ser))
 
 		print('Begin Algorithm')
@@ -170,7 +172,6 @@ class Optimizer(object):
 		ntemp = temp
 		ncurrent = current
 		while (True):
-            ##obslength is not defined, this will cause an error
 			cycles,errors,ones,ser = self.fpga.measureSER(obslength=obslength)
 
 			tser = ser #keep track of last temperature_ser to differentiate from current_ser
@@ -178,10 +179,9 @@ class Optimizer(object):
 			###Vary temperature by smallest resolution zzz (TBD)###
 			zzz = 0.1
 			ntemp = ntemp + zzz
-            ##argument to this funciton does nothing
 			self.setLaserTemp(ntemp)
 			time.sleep(2)
-            ##obslength not defined, will cause error
+
 			ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
 			#f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
 			print("New temperature: %f, nser: %e" %(ntemp, nser))
@@ -192,7 +192,7 @@ class Optimizer(object):
     				break
     			tser = nser
     			ntemp = ntemp + zzz
-                ##argument to this funciton does nothing
+
     			self.setLaserTemp(ntemp)
     			time.sleep(5)
     			ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
@@ -203,7 +203,7 @@ class Optimizer(object):
 			if (nser > (tser+1*10**(m.floor(m.log10(abs(tser)))))) and nser != 0 and (tser<1e-2):
 			tser = nser
 			ntemp = ntemp - zzz
-            ##argument to this funciton does nothing
+
 			self.setLaserTemp(ntemp)
 			time.sleep(5)
 			ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
@@ -212,7 +212,7 @@ class Optimizer(object):
 			while (nser <= tser) and ser != 0:
 				tser = nser
 				ntemp = ntemp - zzz
-                ##argument to this funciton does nothing
+
 				self.setLaserTemp(ntemp)
 				time.sleep(5)
 				ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
@@ -228,7 +228,7 @@ class Optimizer(object):
 			cser = tser #keep track of current_ser to differentiate from temperature_ser
 			ccc = 0.1
 			ncurrent = ncurrent + ccc
-            ##argument to this funciton does nothing
+
 			self.setLaserCurrent(ncurrent)
 			time.sleep(2)
 			ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
@@ -243,7 +243,7 @@ class Optimizer(object):
 					break
 				cser = nser
 				ncurrent = ncurrent + ccc
-                ##argument to this function does nothing
+
 				self.setLaserCurrent(ncurrent)
 				time.sleep(2)
 				ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
@@ -255,7 +255,7 @@ class Optimizer(object):
 			if (nser > (cser))  and nser != 0:
 				cser = nser
 				ncurrent = ncurrent - ccc
-                ##argument to this funciton does nothing
+
 				self.setLaserCurrent(ncurrent)
 				time.sleep(2)
 				ncycles,nerrors,nones,nser = self.fpga.measureSER(obslength=obslength)
@@ -264,7 +264,7 @@ class Optimizer(object):
 				while (nser < cser) and nser!= 0:
 					cser = nser
 					ncurrent = ncurrent - ccc
-                    ##argument to this funciton does nothing
+
 					self.setLaserCurrent(ncurrent)
 					time.sleep(2)
 					ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
@@ -288,8 +288,8 @@ class Optimizer(object):
     def dither_mode(self, obslength):
         ###dither mode###
         current = self.getLaserCurrent()
-        ## controller is not defined is also not an argument, maybe meant self?
-        temp = controller.getLaserTemp()
+
+        temp = self.getLaserTemp()
 
         print("Present temperature: %f, Present current: %f"%(temp, current))
         print("Measuring slot error rate...")
@@ -315,7 +315,7 @@ class Optimizer(object):
             cser = ser 
             ccc = 0.1
             ncurrent = ncurrent + ccc
-            ##argument to this function does nothing
+
             self.setLaserCurrent(ncurrent)
             time.sleep(2)
             ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
@@ -330,7 +330,7 @@ class Optimizer(object):
                         break
                     cser = nser
                     ncurrent = ncurrent + ccc
-                    ##argument to this function does nothing
+
                     self.setLaserCurrent(ncurrent)
                     time.sleep(2)
                     ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
@@ -339,7 +339,7 @@ class Optimizer(object):
 
             elif (nser == cser):
                 ncurrent = ncurrent - ccc
-                ##argument to this function does nothing
+
                 self.setLaserCurrent(ncurrent)
                 time.sleep(2)
                 ncycles,nerrors,nones,nser = self.fpga.measureSER(obslength=obslength)
@@ -350,7 +350,7 @@ class Optimizer(object):
             elif (nser > (cser))  and nser != 0:
                 cser = nser
                 ncurrent = ncurrent - ccc
-                ##argument to this function does nothing
+
                 self.setLaserCurrent(ncurrent)
                 time.sleep(2)
                 ncycles,nerrors,nones,nser = self.fpga.measureSER(obslength=obslength)
@@ -359,7 +359,7 @@ class Optimizer(object):
                 while (nser < cser) and nser!= 0:
                     cser = nser
                     ncurrent = ncurrent - ccc
-                    ##argument to this function does nothing
+
                     self.setLaserCurrent(ncurrent)
                     time.sleep(2)
                     ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
