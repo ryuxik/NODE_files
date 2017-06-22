@@ -11,7 +11,9 @@ from restruct.node import NodeFPGA
 
 if __name__ == "__main__":
 	testsPassed = False
-	vid_pid_did = '1:0:1' # replace with proper vendor and product id and device id of FPGA board
+	progConfig = '' #replace with FPGA config file
+	old_vid_pid = '1:0:1' # replace with proper vendor and product id and device id of FPGA board
+	new_vid_pid = ''
 	debug_level = 0 #replace with desired debug level for fl API
 	busONE_directory = "b1" #replace with proper dir, represents intial directory of bus to master usb port
 	busTWO_directory = 'b2' #replace with proper dir, represents directory of bus to slave usb hub
@@ -26,7 +28,7 @@ if __name__ == "__main__":
 	cam = comm.serialW(camera_directory)
 	uONE = comm.serialW(usb1_switch_directory)
 	uTWO = comm.serialW(usb2_switch_directory)
-	mem = mmap.tester(args)
+	mem = mmap.tester(old_vid_pid, new_vid_pid)
 
 	init_fpga_board_tester = flink.board(vid_pid_did, debug_level, None)
 
@@ -49,9 +51,8 @@ if __name__ == "__main__":
 		results.append('F','FPGA inital connection test failed to run.')
 	
 	#Make tests using memmory map here!!
-	#or implement those tests as part of the connection tests for fpga
 	try:
-		results.extend(mem.test())
+		results.extend(mem.test(progConfig))
 	except:
 		results.append('F','Memmory map command testing to FPGA test failed to run.')
 
