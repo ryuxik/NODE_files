@@ -43,12 +43,12 @@ class tester(object):
 		self.LCCa = 26 # Current consumption (MSB)
 		self.LCCb = 27 # Current consumption (LSB)
 		self.THRa = 28 # Threshold configuration
-		self.THRb = 29 # 
-		self.THRc = 30 # 
+		self.THRb = 29 # Threshold configuration
+		self.THRc = 30 # Threshold configuration
 		self.PDI = 31 # Power level
 		self.FSMa = 32 # FSM configuration
-		self.FSMb = 33 # 
-		self.FSMc = 34 # 
+		self.FSMb = 33 # FSM configuration
+		self.FSMc = 34 # FSM configuration
 		self.ETX = 35 # UART Tx
 		self.ERX = 36 # UART Rx
 		self.SEC = 37 # Error cycle
@@ -191,3 +191,6 @@ class tester(object):
 
 		self.end(self.fpga)
 		return res
+
+
+# :d

@@ -4,14 +4,16 @@ import fl
 import time
 import math as m
 from datetime import datetime
+from mmap import tester
 
 #*assuming fl,handle and fpga objects already created
 class Optimizer(object):
 
     """ Class Initiation """
-    def __init__(self, handle, fpga):
+    def __init__(self, handle, fpga, argList_i, argList_p):
         self.handle = handle
         self.fpga = fpga
+        self.mem_map = tester(argList_i, argList_p)
 
         #Initiate TEC seed laser operating point parameters
         self.temp = 0
@@ -27,6 +29,9 @@ class Optimizer(object):
 
     def getCurrent(self):
         return self.current
+
+    def getMemMap(self):
+        return self.mem_map
 
     """ set functions (update present TEC seed laser operating point) """
 
@@ -45,8 +50,10 @@ class Optimizer(object):
     def setLaserCurrent(self, comm_current):
         
         #Current Consumption
-        MSB_channel = 26    #LCCa
-        LSB_channel = 27    #LCCb
+        #MSB_channel = 26    #LCCa
+        MSB_channel = self.getMemMap().get_addr('LCCa')
+        #LSB_channel = 27    #LCCb
+        LSB_channel = self.getMemMap().get_addr('LCCb')
 
         #Convert commanded current to bytes
         code = comm_current/(4.096*1.1*((1/6.81)+(1/16500)))*4096
@@ -58,8 +65,10 @@ class Optimizer(object):
     def setLaserTemp(self, comm_temp):
         
         #Temp Set Point
-        MSB_channel = 23    #LTSa  
-        LSB_channel = 24    #LTSb
+        #MSB_channel = 23    #LTSa
+        MSB_channel = self.getMemMap().get_addr('LTSa')  
+        #LSB_channel = 24    #LTSb
+        LSB_channel = self.getMemMap().get_addr('LTSb')
 
         #TODO Constants are estimated; may need to verify with vendor
         R_known = 10000
@@ -80,8 +89,10 @@ class Optimizer(object):
     def getLaserCurrent(self):
 
         #Current Consumption 3
-        MSB_channel = 100   #CC3a
-        LSB_channel = 101   #CC3b
+        #MSB_channel = 100   #CC3a
+        MSB_channel = self.getMemMap().get_addr('CC3a')
+        #LSB_channel = 101   #CC3b
+        LSB_channel = self.getMemMap().get_addr('CC3b')
 
         rxm = fl.flReadChannel(self.handle, MSB_channel)
         rxl = fl.flReadChannel(self.handle, LSB_channel)
@@ -93,8 +104,11 @@ class Optimizer(object):
     def getLaserTemp(self):
 
         #Measured Temp
-        MSB_channel = 116   #LTMa
-        LSB_channel = 117   #LTMb
+        #MSB_channel = 116   #LTMa
+        MSB_channel = self.getMemMap().get_addr('LTMa')
+
+        #LSB_channel = 117   #LTMb
+        LSB_channel = self.getMemMap().get_addr('LTMb')
         
         rxm = fl.flReadChannel(self.handle,MSB_channel)
         rxl = fl.flReadChannel(self.handle,LSB_channel)
