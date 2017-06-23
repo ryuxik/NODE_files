@@ -1,4 +1,4 @@
-import fl;
+import fl
 import argparse
 import time
 import struct

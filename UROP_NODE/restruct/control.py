@@ -21,7 +21,7 @@ This is the consolidated control file, includes funcitons from
 nodectrl, nodectrl_oven_test, and SPI_test
 
 NODE FPGA Commander Copyright (C) 2015 Ryan Kingsbury
--Updated and restructured by Santiago Munoz, and Ethan Munden 2017
+-Updated and restructured by Santiago Munoz and Ethan Munden 2017
 """
 import fl
 import argparse

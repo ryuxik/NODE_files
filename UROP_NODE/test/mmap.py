@@ -78,32 +78,109 @@ class tester(object):
 		self.TE6b = 115 # Temperature 6 (LSB)
 		self.LTMa = 116 # Measured temp (MSB)
 		self.LTMb = 117 # Measured temp (LSB)
+		self.addresses = 	{
+							'PPM': (0,'rw'), 'CTR': (1,'rw'),'ACC': (2,'ro'), 'RCC': (3,'ro'),
+							'LAC': (4,'ro'), 'LRC': (5,'ro'), 'FRC': (14,'ro'), 'VER': (15,'ro'),
+							'PO1': (16,'rw'), 'PO2': (17,'rw'), 'PO3': (18,'rw'), 'PO4': (19, 'rw'),
+							'HE1': (20,'rw'), 'HE2': (21,'rw'), 'CAL': (22,'rw'), 'LTSa': (23,'rw'),
+							'LTSb': (24,'rw'), 'LGA': (25,'rw'), 'LCCa': (26,'rw'), 'LCCb': (27,'rw'),
+							'THRa': (28,'rw'), 'THRb': (29,'rw'), 'THRc': (30,'rw'), 'PDI': (31,'ro'),
+							'FSMa': (32,'rw'), 'FSMb': (33,'rw'), 'FSMc': (34,'rw'), 'ETX': (35,'rw'),
+							'ERX': (36,'ro'), 'SEC': (37,'rw'), 'SCE': (37,'ro'), 'SIE': (39,'ro'),
+							'SFL': (40,'ro'), 'SST': (41,'ro'), 'CC1a': (96,'ro'), 'CC1b': (97,'ro'),
+							'CC2a': (98,'ro'), 'CC2b': (99,'ro'), 'CC3a': (100,'ro'), 'CC3b': (101,'ro'),
+							'CC4a': (102,'ro'), 'CC4b': (103,'ro'), 'TE1a': (104,'ro'), 'TE1b': (105,'ro'),
+							'TE2a': (106,'ro'), 'TE2b': (107,'ro'), 'TE3a': (108,'ro'), 'TE3b': (109, 'ro'),
+							'TE4a': (110,'ro'), 'TE4b': (111,'ro'), 'TE5a': (112,'ro'), 'TE5b': (112,'ro'),
+							'TE6a': (114,'ro'), 'TE6b': (115,'ro'), 'LTMa': (116,'ro'), 'LTMb': (117,'ro')
+							}
 
 	def start(self):
-		#creates NodeFGA object and opens connection to FPGA board
+		"""
+		Creates NodeFGA object, opens connection to FPGA board, and loads it with standard firmware.
+
+		Returns:
+			(NodeFPGA): object representing fpga board
+		"""
 		fl.flInitialise(0)
 		fl.flLoadStandardFirmware(old_vid_pid, new_vid_pid)
-		#this should be fl.flAwaitDevice, but according to past contributor, it didn't work
-		time.sleep(3)
+		time.sleep(3) #this should be fl.flAwaitDevice(), but according to past contributor, it didn't work
 		handle = fl.flOpen(self.new_vid_pid)
 		return NodeFPGA(handle)
 
+	def get_addr(self, name):
+		"""
+		Gets addresss of given name
+
+		Args:
+			name(string): name of address
+		Returns:
+			(int): address of name
+		"""
+		return self.addresses[name][0]
+
+	def get_type(self, name):
+		"""
+		Gets type of given name
+
+		Args:
+			name(string): name of address
+		Returns:
+			(string): type of address
+		"""
+		return self.addresses[name][1]
+
 	def end(self, fpga):
-		#closes connection to FPGA board
+		"""
+		Closes connection to FPGA board.
+
+		Args:
+			fpga(NodeFPGA): object representing fpga board
+		"""
 		fl.flClose(fpga.handle) 
 
 	def test_read(fpga, channel, expected):
+		"""
+		Compares data read from channel to what is expected from channel
+
+		Args:
+			channel(int): conduit channel to communicate through to fpga board
+			expected(): expected response from communication through channel
+		Returns:
+			(boolean): True if expected matches what is read, else false
+		"""
 		return expected == fl.flReadChannel(fpga.handle, channel)
 
 	def test_write(fpga, channel, data):
+		"""
+		Tests writing to a specified location in mem map using the channel and then checks the response of the board
+
+		Args:
+			fpga(NodeFPGA): object representing fpga board
+			channel(int): counduit channel to communicate to fpga board
+			data(): data to be written to fpga board through specified channel
+		Returns:
+			(boolean): result from test_read
+		"""
 		fl.flWriteChannel(fpga.handle,channel, data)
 		#not sure how to format data yet to test a read to loc that was written to
 		#but the idea should be similar to this
 		return test_read(fpga, channel, data)
 
-	def test(self, vid_pid_did, progConfig):
+	def test(self, progConfig):
+		"""
+		Main function to test reading and writing data to and from various addresses on the FPGA board
+
+		Args:
+			progConfig(): file to configure FPGA board
+		Returns:
+			res(list): list containig reports of passed and failed tests
+		"""
 		res = []
+		ro = [(key, val[0]) for key in self.addresses for val in self.addresses[key] if val[1] == 'ro'] #creates tuples of read only locs with addr, (;NAME', addr)
+		rw = [(key, val[0]) for key in self.addresses for val in self.addresses[key] if val[1] == 'rw'] #creates tuples of read/write locs with addr, ('NAME', addr)
 		
+
 		#implement tests using memmory map here and append results in correct format to res to be passed to RPI_a_test
 		fl.flProgram(self.fpga.handle, progConfig)
 		#fl.flLoadStandardFirmware(self.fpga.handle, progConfig)

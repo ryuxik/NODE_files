@@ -1,5 +1,3 @@
-
-
 """
 NODE FPGA Commander Copyright (C) 2015 Ryan Kingsbury
 -Updated and restructured by Santiago Munoz, 2017
