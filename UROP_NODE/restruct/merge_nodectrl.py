@@ -13,12 +13,16 @@ import sys
 import math as m
 from bench import LaserController
 
-DEBUG = False
+#DEBUG = False
 
 # FPGA image, must update with new directory/ host on rpi cm3!!!!
-FPGA_IMAGE = "/home/kingryan/Dropbox/grad_school/fpga/makestuff/hdlmake/apps/roamingryan/swled/bist/vhdl/top_level.xsvf"
+#FPGA_IMAGE = "/home/kingryan/Dropbox/grad_school/fpga/makestuff/hdlmake/apps/roamingryan/swled/bist/vhdl/top_level.xsvf"
 
 def main():
+    """
+    Main control function, gets necessary arguments and prints status relevant reports.
+    """
+
     argList = get_args()
     print (argList)
     handle = fl.FLHandle()
@@ -104,8 +108,14 @@ def main():
     finally:
         fl.flClose(handle)
 
-# File-reader which yields chunks of data
 def readFile(fileName):
+    """
+    File-reader which yields chunks of data
+
+    Args:
+        fileName(string): name of file to read
+    """    
+
     with open(fileName, "rb") as f:
         while True:
             chunk = f.read(32768)
@@ -114,8 +124,14 @@ def readFile(fileName):
             else:
                 break
 
-#gets neccessary args to communicate and program FPGA board, maybe replace so that it runs straight from rpi
 def get_args():
+     """
+    Gets neccessary args to communicate and program FPGA board.
+    ## Maybe replace so that it gets these arguments from the proper place using modes
+
+    Returns:
+        argList(namespace): populated namespace object
+    """
     parser = argparse.ArgumentParser(description='Load FX2LP firmware, load the FPGA, interact with the FPGA.')
     parser.add_argument('-i', action="store", nargs=1, metavar="<VID:PID>", help="vendor ID and product ID (e.g 1443:0007)")
     parser.add_argument('-v', action="store", nargs=1, required=True, metavar="<VID:PID>", help="VID, PID and opt. dev ID (e.g 1D50:602B:0001)")
@@ -134,8 +150,19 @@ def get_args():
     argList = parser.parse_args()
     return argList
 
-#handles ids when flOpen fails
 def ids(vp, argList):
+     """
+    Handles opening connection to FPGA board when flOpen fails initially. Also loads standard firmware using device id
+
+    Args:
+        vp(): vendor ID and product ID
+        argList(namespace): populated namespace object
+
+    Returns:
+        An opaque reference to an internal structure representing the connection.
+        This must be freed at some later time by a call to \c flClose(), or a resource-leak will ensue.
+
+    """
     if argList.i:
         ivp = argList.i[0]
         print("Loading firmware into {}...".format(ivp))
@@ -151,15 +178,30 @@ def ids(vp, argList):
     else:
         raise fl.FLException("Could not open FPGALink device at {} and no initial VID:PID was supplied".format(vp))
 
-#selects conduit and checks if the FPGA board is nero capable and capable of communication 
 def conduit_selection(argList_c=1):
+    """
+    Selects conduit and checks if the FPGA board is nero capable and capable of communication.
+
+    Args:
+        argList_c(int): comm conduit to chose
+    Returns:
+        (tuple): booleans indicating if device is nero capable and comm capable
+    """
     isNeroCapable = fl.flIsNeroCapable(handle)
     isCommCapable = fl.flIsCommCapable(handle, conduit)
     fl.flSelectConduit(handle, conduit)
     return (isNeroCapable, isCommCapable)
 
-#tests the JTAG chain
 def jtag_chain(isNeroCapable, argList, vp, handle):
+    """
+    Tests the JTAG chain.
+
+    Args:
+        isNeroCapable(boolean): indicated if device is nero capable
+        argList(namespace): populated namespaced object with necessary args
+        vp(): vendor and product ID
+        handle: An opaque reference to an internal structure representing the connection.
+    """
     if argList.q:
         if isNeroCapable:
             chain = fl.jtagScanChain(handle, argList.q[0])
@@ -172,8 +214,16 @@ def jtag_chain(isNeroCapable, argList, vp, handle):
         else:
             raise fl.FLException("JTAG chain scan requested but FPGALink device at {} does not support NeroJTAG".format(vp))
 
-#configures FPGA board with selected program
 def configure(argList, isNeroCapable, handle, vp):
+    """
+    Configures FPGA board with selected program.
+
+    Args:
+        argList(namespace): populated namespaced object with necessary args
+        isNeroCapable(boolean): indicated if device is nero capable
+        handle: An opaque reference to an internal structure representing the connection.
+        vp(): vendor and product ID
+    """
     if argList.p:
         progConfig = argList.p[0]
         print("Programming device with config {}...".format(progConfig))
@@ -183,6 +233,13 @@ def configure(argList, isNeroCapable, handle, vp):
             raise fl.FLException("Device program requested but device at {} does not support NeroProg".format(vp))
 
 def opt_alg(argList, fpga):
+    """
+    Optimizing algorithm, needs to be updated to use optimizer.py file. Has two modes.
+
+    Args:
+        argList(namespace): populated namespace object
+        fpga(NodeFPGA): object representing fpga board
+    """
     if argList.ser:
         f = open('ppm128_ser_dither.csv', 'w')
         obslength = float(argList.ser)
@@ -442,8 +499,20 @@ def opt_alg(argList, fpga):
                 #power optimization
             f.close()
 
-#writes bin data to fpga
 def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, N, num_bytes):
+    """
+    Writes binary data to FPGA board.
+
+    Args:
+        argList(namespace): populated namespaced object with necessary args
+        fpga(NodeFPGA): object representing FPGA board
+        writechannel(int): conduit to use for writing to board
+        resetchannel(int): conduit to use for reset to board
+        statuschannel(int): channel to use for reading status from board
+        writedelay(float): delay for writing used when writing files to board
+        vp(): vendor and product ID 
+        M(int): ppm order
+    """
     if argList.f:
         dataFile = argList.f[0]
         try:
@@ -457,7 +526,6 @@ def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writ
         else:
             fpga.writeFile(writechannel,resetchannel,statuschannel,data_packets,writedelay,vp)
             fpga.setTrackingMode(writechannel,trackingbyte,M) # quick hack, but should be doing tracking mode after a frame already
-
 
 if __name__ == '__main__':
     main()
