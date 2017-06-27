@@ -4,7 +4,7 @@
 	
 	Acceptance test for the Rasperry Pi Baseboard with the Modulator, Camera, and Bus.
 """
-## Must fix code to work with new connection class
+## Need to plug into pi and devices to find out info and code it in
 import test.busComm as comm
 import test.fpga_link_test as flink
 import test.mmap_test.py as mmap
@@ -26,6 +26,8 @@ if __name__ == "__main__":
 	plBus_master_expectTest = ''
 	plBus_slave_sendTest = ''
 	plBus_slave_expectTest = ''
+	plBus_wendpoint = ''
+	plBus_rendpoint = ''
 	
 	#camera info required for usb connection
 	camera_vid = ''
@@ -34,28 +36,34 @@ if __name__ == "__main__":
 	camera_timeout = ''
 	camera_sendTest = ''
 	camera_expectTest = ''
+	camera_wendpoint = ''
+	camera_rendpoint = ''
 
 	#switch1 info required for usb connection, may replace later with different connection type
 	switch1_vid = ''
 	switch1_pid = ''
 	switch1_packet_size = ''
 	switch1_timeout = ''
+	switch1_wendpoint = ''
+	switch1_rendpoint = ''
 
 	#switch2 info required for usb connection, may replace later with different connection type
 	switch2_vid = ''
 	switch2_pid = ''
 	switch2_packet_size = ''
 	switch2_timeout = ''
+	switch2_rendpoint = ''
+	switch2_wendpoint = ''
 
 	results = [] #array containing test results
 
 	#Making instances of necessary connections for test
 	
 	##need to find out what type of usb transfer to use for each of these
-	plBusMaster = comm.connection(plBus_vid,plBus_pid,plBus_packet_size,plBus_timeout,True)
-	camera = comm.connection(camera_vid,camera_pid,camera_packet_size,camera_timeout)
-	switch1 = comm.connection(switch1_vid, switch1_pid, switch1_packet_size, switch1_timeout)
-	switch2 = comm.connection(switch2_vid, switch2_pid, switch2_packet_size, switch2_timeout)
+	plBusMaster = comm.connection(plBus_vid,plBus_pid,plBus_packet_size,plBus_timeout, plBus_wendpoint, plBus_rendpoint True)
+	camera = comm.connection(camera_vid,camera_pid,camera_packet_size,camera_timeout, camera_wendpoint, camera_rendpoint)
+	switch1 = comm.connection(switch1_vid, switch1_pid, switch1_packet_size, switch1_timeout, switch1_wendpoint, switch1_rendpoint)
+	switch2 = comm.connection(switch2_vid, switch2_pid, switch2_packet_size, switch2_timeout, switch2_wendpoint, switch2_rendpoint)
 	
 	mem = mmap.tester(fpga_old_vid_pid, fpga_new_vid_pid)
 
@@ -95,7 +103,7 @@ if __name__ == "__main__":
 		
 	#Testing connection to bus as slave
 	try:
-		plBusSlave = comm.connection(plBus_vid,plBus_pid,plBus_packet_size,plBus_timeout)
+		plBusSlave = comm.connection(plBus_vid,plBus_pid,plBus_packet_size,plBus_timeout, plBus_wendpoint, plBus_rendpoint)
 		results.append(plBusSlave.testConnection(plBus_slave_sendTest, plBus_slave_expectTest))
 	except:
 		results.append('F','Connection to bus as slave failed')

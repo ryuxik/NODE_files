@@ -10,7 +10,7 @@ class connection:
 	"""
 	Class to handle communication over USB with devices
 	"""
-	def __init__(self, vid, pid, packet_size, timeout, isMaster=False, debug=False):
+	def __init__(self, vid, pid, packet_size, timeout, wendpoint, rendpoint, isMaster=False, debug=False):
 		self.isMaster = isMaster
 		self.vid = vid
 		self.pid = pid
@@ -20,6 +20,8 @@ class connection:
 		self.received = 'bar' #holds data the pi recieves from the bus
 		self.debug = debug
 		self.timeout = timeout
+		self.writeEndpoint = wendpoint
+		self.readEndpoint = rendpoint
 		if self.debug:
 			logDevice(self.d)
 
@@ -55,9 +57,9 @@ class connection:
 		"""
 		Sends stored data to device
 		"""
-		endpoint = 0 ##fix this with the correct device endpoint
+		
 		to_send = self.data
-		assert len(self.d.write(endpoint, to_send, self.timeout)) == len(to_send)
+		assert len(self.d.write(self.wendpoint, to_send, self.timeout)) == len(to_send)
 
 	def updateData(self, newData): 
 		"""
@@ -73,7 +75,7 @@ class connection:
 		"""
 		Updates message received from device
 		"""
-		r = self.d.read(0x81,self.packet_size,self.timeout) #replace 0x81 with correct endpoint
+		r = self.d.read(self.rendpoint,self.packet_size,self.timeout) #replace 0x81 with correct endpoint
 		self.received = ''.join([chr(i) for i in r]) # change this line to format message received appropriately
 
 	def testConnection(self, to_send, to_receive):
