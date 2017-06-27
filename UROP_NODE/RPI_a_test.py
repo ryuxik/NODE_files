@@ -4,6 +4,7 @@
 	
 	Acceptance test for the Rasperry Pi Baseboard with the Modulator, Camera, and Bus.
 """
+## Must fix code to work with new connection class
 import test.busComm as comm
 import test.fpga_link_test as flink
 import test.mmap_test.py as mmap
@@ -12,35 +13,63 @@ from restruct.node import NodeFPGA
 if __name__ == "__main__":
 	testsPassed = False
 	progConfig = '' #replace with FPGA config file
-	old_vid_pid = '1:0:1' # replace with proper vendor and product id and device id of FPGA board
+	fpga_old_vid_pid = '1:0:1' # replace with proper vendor and product id and device id of FPGA board
 	new_vid_pid = ''
 	debug_level = 0 #replace with desired debug level for fl API
-	busONE_directory = "b1" #replace with proper dir, represents intial directory of bus to master usb port
-	busTWO_directory = 'b2' #replace with proper dir, represents directory of bus to slave usb hub
-	camera_directory = "c" #replace with proper dir, repesents directory of camera to slave usb hub
-	usb1_switch_directory = 'ss' #replace with proper dir, represents directory of switch for usb1.1
-	usb2_switch_directory = 'ms' #replace with proper dir, represents directory of switch for usb2.0
+	
+	#pl Bus info required for usb connection
+	plBus_vid = ''
+	plBus_pid = ''
+	plBus_packet_size = ''
+	plBus_timeout = ''
+	plBus_master_sendTest = ''
+	plBus_master_expectTest = ''
+	plBus_slave_sendTest = ''
+	plBus_slave_expectTest = ''
+	
+	#camera info required for usb connection
+	camera_vid = ''
+	camera_pid = ''
+	camera_packet_size = ''
+	camera_timeout = ''
+	camera_sendTest = ''
+	camera_expectTest = ''
+
+	#switch1 info required for usb connection, may replace later with different connection type
+	switch1_vid = ''
+	switch1_pid = ''
+	switch1_packet_size = ''
+	switch1_timeout = ''
+
+	#switch2 info required for usb connection, may replace later with different connection type
+	switch2_vid = ''
+	switch2_pid = ''
+	switch2_packet_size = ''
+	switch2_timeout = ''
+
 	results = [] #array containing test results
 
 	#Making instances of necessary connections for test
-	busONE = comm.serialW(busONE_directory,True)
-	busTWO = comm.serialW(busONE_directory)
-	cam = comm.serialW(camera_directory)
-	uONE = comm.serialW(usb1_switch_directory)
-	uTWO = comm.serialW(usb2_switch_directory)
-	mem = mmap.tester(old_vid_pid, new_vid_pid)
+	
+	##need to find out what type of usb transfer to use for each of these
+	plBusMaster = comm.connection(plBus_vid,plBus_pid,plBus_packet_size,plBus_timeout,True)
+	camera = comm.connection(camera_vid,camera_pid,camera_packet_size,camera_timeout)
+	switch1 = comm.connection(switch1_vid, switch1_pid, switch1_packet_size, switch1_timeout)
+	switch2 = comm.connection(switch2_vid, switch2_pid, switch2_packet_size, switch2_timeout)
+	
+	mem = mmap.tester(fpga_old_vid_pid, fpga_new_vid_pid)
 
-	init_fpga_board_tester = flink.board(vid_pid_did, debug_level, None)
+	init_fpga_board_tester = flink.board(fpga_old_vid_pid_did, debug_level, None)
 
 	#Testing intial connection to bus
 	try:
-		busONE.testConnection()
+		results.append(plBusMaster.testConnection(plBus_master_sendTest,plBus_master_expectTest))
 	except:
 		results.append('F','Initial connection to bus failed')
 
 	#Testing connection to camera
 	try:
-		cam.testConnection()
+		results.append(camera.testConnection(camera_sendTest, camera_expectTest))
 	except:
 		results.append('F','Connection to camera failed')
 
@@ -60,12 +89,14 @@ if __name__ == "__main__":
 	try:
 		#implement a slave test here!!
 		pass
+		#do something to switch both 1 and 2 to set plBus as slave
 	except:
 		results.append('F','Switch of bus to slave failed')
 		
 	#Testing connection to bus as slave
 	try:
-		busTWO.testConnection()
+		plBusSlave = comm.connection(plBus_vid,plBus_pid,plBus_packet_size,plBus_timeout)
+		results.append(plBusSlave.testConnection(plBus_slave_sendTest, plBus_slave_expectTest))
 	except:
 		results.append('F','Connection to bus as slave failed')
 
