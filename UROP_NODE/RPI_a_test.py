@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	new_vid_pid = ''
 	debug_level = 0 #replace with desired debug level for fl API
 	
-	#pl Bus info required for usb connection
+	#pl Bus info required for usb connection, find out what type of transfer each connection is (control, isochronous, interrupt, or bulk)
 	plBus_vid = ''
 	plBus_pid = ''
 	plBus_packet_size = ''
