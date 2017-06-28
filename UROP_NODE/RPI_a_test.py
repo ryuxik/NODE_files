@@ -8,7 +8,8 @@
 import test.busComm as comm
 import test.fpga_link_test as flink
 import test.mmap_test.py as mmap
-from restruct.node import NodeFPGA 
+from restruct.node import NodeFPGA
+import rpiControls.pinController as pinC 
 
 if __name__ == "__main__":
 	testsPassed = False
@@ -17,7 +18,8 @@ if __name__ == "__main__":
 	new_vid_pid = ''
 	debug_level = 0 #replace with desired debug level for fl API
 	
-	#pl Bus info required for usb connection, find out what type of transfer each connection is (control, isochronous, interrupt, or bulk)
+	## find out what type of transfer each connection is (control, isochronous, interrupt, or bulk)
+	#pl Bus info required for usb connection
 	plBus_vid = ''
 	plBus_pid = ''
 	plBus_packet_size = ''
@@ -39,22 +41,6 @@ if __name__ == "__main__":
 	camera_wendpoint = ''
 	camera_rendpoint = ''
 
-	#switch1 info required for usb connection, may replace later with different connection type
-	switch1_vid = ''
-	switch1_pid = ''
-	switch1_packet_size = ''
-	switch1_timeout = ''
-	switch1_wendpoint = ''
-	switch1_rendpoint = ''
-
-	#switch2 info required for usb connection, may replace later with different connection type
-	switch2_vid = ''
-	switch2_pid = ''
-	switch2_packet_size = ''
-	switch2_timeout = ''
-	switch2_rendpoint = ''
-	switch2_wendpoint = ''
-
 	results = [] #array containing test results
 
 	#Making instances of necessary connections for test
@@ -62,8 +48,6 @@ if __name__ == "__main__":
 	##need to find out what type of usb transfer to use for each of these
 	plBusMaster = comm.connection(plBus_vid,plBus_pid,plBus_packet_size,plBus_timeout, plBus_wendpoint, plBus_rendpoint True)
 	camera = comm.connection(camera_vid,camera_pid,camera_packet_size,camera_timeout, camera_wendpoint, camera_rendpoint)
-	switch1 = comm.connection(switch1_vid, switch1_pid, switch1_packet_size, switch1_timeout, switch1_wendpoint, switch1_rendpoint)
-	switch2 = comm.connection(switch2_vid, switch2_pid, switch2_packet_size, switch2_timeout, switch2_wendpoint, switch2_rendpoint)
 	
 	mem = mmap.tester(fpga_old_vid_pid, fpga_new_vid_pid)
 
@@ -96,7 +80,7 @@ if __name__ == "__main__":
 	#Testing switch of bus to slave
 	try:
 		#implement a slave test here!!
-		pass
+		results.append(pinC.main())
 		#do something to switch both 1 and 2 to set plBus as slave
 	except:
 		results.append('F','Switch of bus to slave failed')
