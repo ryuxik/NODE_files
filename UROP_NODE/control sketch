@@ -3,20 +3,32 @@ This is pseudocode given by Rodrigo to sketch out how we will first approach the
 """
 
 while(True): #main control loop
-	readTelemetry() #read data
-	alarms() #check if system is in working conditions, handle errors ex. device drawing too much power
-	updateTelemetry() #update data
-	if(commEnabled): #is the sat in communication mode with devices
-		processCamData() #take data from camera centering and process
-		updateFSM() #update FSM
-		updateOthers() #update other devices connected to FPGA or rpi
-		sendData() #send data
+	readTelemetry()
+		# Read relevant data on FPGA and RPI according to mem map 
+	alarms() 
+		# 1. Check if system is in working conditions according to data read 
+		# 2. Handle errors 
+		     	ex. Device drawing too much power
+	updateTelemetry() 
+		# Update data
+	if(commEnabled): 
+		# Is the sat in communication mode with connected devices
+		processCamData() 
+			# Take data from camera centering and process in RPI
+		updateFSM() 
+			# Update FSM according to data that was processed
+		updateOthers() 
+			# Update other devices connected to FPGA or rpi
+		sendData() 
+			# Send data
 
-interrupt(planetLabBus): #data is coming in through PL bus
-	setValues(dataFromBus) #set values according to data received, return to while loop at end
+interrupt(planetLabBus): 
+	# Data is coming in through PL bus, trigger interupt to handle it
+	setValues(dataFromBus) 
+		# Set values according to data received, return to while loop at end
 
 """
-Genral Notes:
+General Notes:
 	
 	Need to figure out how to communicate with PL Bus as slave, how to handle interrupts. Check if there is a FIFO at bus to act as buffer if data is received during control
 	loop or if an immediate interrupt is required to handle incoming data without loss.
