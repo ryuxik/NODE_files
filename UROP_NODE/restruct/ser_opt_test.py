@@ -31,7 +31,7 @@ import sys
 import math as m
 from bench import LaserController
 
-DEBUG = False
+DEBUG = True
 
 # FPGA image, must update with new directory/ host on rpi cm3!!!!
 FPGA_IMAGE = "/home/kingryan/Dropbox/grad_school/fpga/makestuff/hdlmake/apps/roamingryan/swled/bist/vhdl/top_level.xsvf"
@@ -49,14 +49,14 @@ def main():
         except fl.FLException as ex:
             handle = ids(vp, argList)
         if argList.c:
-            isNeroCapable, isCommCapable = conduit_selection(int(argList.c[0]))
+            isNeroCapable, isCommCapable = conduit_selection(handle, int(argList.c[0]))
         else:
-            isNeroCapable, isCommCapable = conduit_selection()
-        
+            isNeroCapable, isCommCapable = conduit_selection(handle)
+     
         jtag_chain(isNeroCapable, argList, vp, handle)
-        
+     
         configure(argList, isNeroCapable, handle, vp)
-        
+     
         if argList.f and not isCommCapable:
             raise fl.FLException("Data file load requested but device at {} does not support CommFPGA".format(vp))
 
@@ -97,7 +97,7 @@ def main():
 
             #alg testing goes here, but alg is not up to date!!
             opt_alg(argList, fpga)
-            
+         
     except fl.FLException as ex:
         print(ex)
     finally:
@@ -150,8 +150,8 @@ def ids(vp, argList):
     else:
         raise fl.FLException("Could not open FPGALink device at {} and no initial VID:PID was supplied".format(vp))
 
-#selects conduit and checks if the FPGA board is nero capable and capable of communication 
-def conduit_selection(argList_c=1):
+#selects conduit and checks if the FPGA board is nero capable and capable of communication
+def conduit_selection(handle, conduit=1):
     isNeroCapable = fl.flIsNeroCapable(handle)
     isCommCapable = fl.flIsCommCapable(handle, conduit)
     fl.flSelectConduit(handle, conduit)
@@ -182,6 +182,8 @@ def configure(argList, isNeroCapable, handle, vp):
             raise fl.FLException("Device program requested but device at {} does not support NeroProg".format(vp))
 
 def opt_alg(argList, fpga):
+    #temporary
+    M = 8
     if argList.ser:
         if argList.f:
             f = open(argList.f, 'w')
@@ -203,21 +205,22 @@ def opt_alg(argList, fpga):
 
         if (mode == 0):
             #scan mode
+            print ("Scan Mode")
             current = 125
             controller.setLaserCurrent(current)
             time.sleep(2)
             #wait until current settles
-            while not (m.floor(controller.getLaserCurrent()) == round(current,1)):
+            while not (m.floor(controller.getLaserCurrent()) == round(current,1)):  
                 controller.setLaserCurrent(current)
                 time.sleep(1)
-            
-            
+         
+         
             temp = 38
             controller.setLaserTemp(temp)
             time.sleep(2)
             #wait until temperature settles
             while not(m.floor(controller.getLaserTemp()) == round(temp,1)):
-                #controller.setLaserTemp(temp)
+                controller.setLaserTemp(temp)
                 time.sleep(1)
 
             #get temp/current again since commanded current/temp may not be 100% accurate
@@ -234,7 +237,7 @@ def opt_alg(argList, fpga):
                 print (" ones   = 0x%-12X target=0x%-12X"%(ones,cycles/M))
                 print (" SlotER = %e"%(ser))
                 print ('Begin Algorithm')
-            start_time = datetime.now()           
+            start_time = datetime.now()          
             curr_time = datetime.now()
             ntemp = temp
             ncurrent = current
@@ -252,23 +255,23 @@ def opt_alg(argList, fpga):
                 f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
                 if DEBUG:
                     print ("New temperature: %f, nser: %e" %(ntemp, nser))
-
-                while (nser <= tser)  and nser != 0:
-                    #safety check
-                    if (ntemp >= 50):
-                        print ("temp exceeded")
-                        break
-                    tser = nser
-                    ntemp = ntemp + zzz
-                    controller.setLaserTemp(ntemp)
-                    time.sleep(5)
-                    ncycles, nerrors, nones, nser = fpga.measureSER(obslength=obslength)
-                    if DEBUG:
-                        print ("New temperature: %f, nser: %e" %(ntemp,nser))
-                    f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
+                if (nser <= tser):
+                    while (nser <= tser)  and nser != 0:
+                        #safety check
+                        if (ntemp >= 50):
+                            print ("temp exceeded")
+                            break
+                        tser = nser
+                        ntemp = ntemp + zzz
+                        controller.setLaserTemp(ntemp)
+                        time.sleep(5)
+                        ncycles, nerrors, nones, nser = fpga.measureSER(obslength=obslength)
+                        if DEBUG:
+                            print ("New temperature: %f, nser: %e" %(ntemp,nser))
+                        f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
                 #increasing temperature results in worse ser
                 #revert back to last temperature and go in reverse direction
-                if (nser > tser) and nser != 0:# and tser < 1e-2:
+                elif (nser > tser) and nser != 0:# and tser < 1e-2:
 
                     tser = nser
                     ntemp = ntemp - zzz
@@ -279,7 +282,7 @@ def opt_alg(argList, fpga):
                     if DEBUG:
                         print ("New temperature %f, nser: %e" %(ntemp, nser))
 
-                    while (nser <= tser) and ser != 0:
+                    while (nser <= tser) and nser != 0:
                         tser = nser
                         ntemp = ntemp - zzz
                         controller.setLaserTemp(ntemp)
@@ -293,34 +296,35 @@ def opt_alg(argList, fpga):
                 if DEBUG:
                     print ("Current temperature: %f, current ser: %e" %(ntemp,tser))
 
-                f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')           
-               
+                f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')         
+             
                 #Vary Current by smallest resolution ccc (only start after SER is above noise floor)??
-                if (tser < 1e-2):
+                if True:    #used to be (tser < 1e-2) but unsure if we should restrict that
                     cser = tser #keep track of current_ser to differentiate from temperature_ser
                     ccc = 0.1
                     ncurrent = ncurrent + ccc
                     controller.setLaserCurrent(ncurrent)
                     time.sleep(2)
                     ncycles, nerrors, nones, nser = fpga.measureSER(obslength=obslength)
-                    print ("New current: %f, nser: %e" %(ncurrent, nser)) 
+                    print ("New current: %f, nser: %e" %(ncurrent, nser))
                     f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
-
-                    while (nser < cser) and nser != 0 :
-                        #safety check
-                        if (ncurrent >= 138):
-                            print ("curr exceeded")
-                            break
-                        cser = nser
-                        ncurrent = ncurrent + ccc
-                        controller.setLaserCurrent(ncurrent)
-                        time.sleep(2)
-                        ncycles, nerrors, nones, nser = fpga.measureSER(obslength=obslength)
-                        print ("New current: %f, nser: %e" %(ncurrent,nser))
-                        f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
-                    
+         
+        if (nser <= cser) and nser != 0:
+                        while (nser < cser) and nser != 0 :
+                            #safety check  
+                            if (ncurrent >= 138):
+                                print ("curr exceeded")
+                                break
+                            cser = nser
+                            ncurrent = ncurrent + ccc
+                            controller.setLaserCurrent(ncurrent)
+                            time.sleep(2)
+                            ncycles, nerrors, nones, nser = fpga.measureSER(obslength=obslength)
+                            print ("New current: %f, nser: %e" %(ncurrent,nser))
+                            f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
+                 
                     #increasing current results in worst ser
-                    if (nser > (cser))  and nser != 0:
+                    elif (nser > cser)  and nser != 0:
                         cser = nser
                         ncurrent = ncurrent - ccc
                         controller.setLaserCurrent(ncurrent)
@@ -352,14 +356,14 @@ def opt_alg(argList, fpga):
         elif (mode == 1):
             #dither mode
             current = controller.getLaserCurrent()
-           
-           #controller.setLaserCurrent(current)
-            
+         
+        #controller.setLaserCurrent(current)
+         
             #time.sleep(2)
             #while not (current - 0.1 <= round(controller.getLaserCurrent(),1) <= current + 0.1):
                 #controller.setLaserCurrent(current)
                 #time.sleep(1)
-            
+         
             temp = controller.getLaserTemp()
             #controller.setLaserTemp(temp)
             #time.sleep(2)
@@ -378,7 +382,7 @@ def opt_alg(argList, fpga):
             print (" ones   = 0x%-12X target=0x%-12X"%(ones,cycles/M))
             print (" SlotER = %e"%(ser))
             print ('Begin Algorithm')
-            start_time = datetime.now()           
+            start_time = datetime.now()          
             curr_time = datetime.now()
             ntemp = temp
             ncurrent = current
@@ -386,17 +390,17 @@ def opt_alg(argList, fpga):
 
                 cycles,errors,ones,ser = fpga.measureSER(obslength=obslength)
                 if True:
-                    cser = ser 
+                    cser = ser
                     ccc = 0.1
                     ncurrent = ncurrent + ccc
                     controller.setLaserCurrent(ncurrent)
                     time.sleep(2)
                     ncycles, nerrors, nones, nser = fpga.measureSER(obslength=obslength)
-                    print ("New current: %f, nser: %e" %(ncurrent, nser)) 
+                    print ("New current: %f, nser: %e" %(ncurrent, nser))
                     f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
 
                     avg_ser = []
-                    
+                 
                     if (nser < cser) and nser != 0:
                         while (nser < cser) and nser != 0 :
                             #safety check
@@ -417,7 +421,7 @@ def opt_alg(argList, fpga):
                         ncycles,nerrors,nones,nser = fpga.measureSER(obslength=obslength)
                         f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
                         print ("New current: %f, nser: %e" %(ncurrent, nser))
-                    
+                 
                     #increasing current results in worst ser
                     elif (nser > (cser))  and nser != 0:
                         cser = nser
