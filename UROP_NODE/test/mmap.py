@@ -151,6 +151,9 @@ class tester(object):
 		"""
 		return expected == fl.flReadChannel(fpga.handle, channel)
 
+	def read(fpga, channel):
+		return fl.flReadChannel(fpga.handle, channel)
+
 	def test_write(fpga, channel, data):
 		"""
 		Tests writing to a specified location in mem map using the channel and then checks the response of the board

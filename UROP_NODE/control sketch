@@ -1,22 +1,28 @@
 """
 This is pseudocode given by Rodrigo to sketch out how we will first approach the sat control
 """
-
+print('hello you have accessed the control loop')
+"""
 while(True): #main control loop
 	readTelemetry()
-		# Read relevant data on FPGA and RPI according to mem map 
+		# Read relevant data on RPi and Devices
 	alarms() 
-		# 1. Check if system is in working conditions according to data read 
+		# 1. Check if system is in working conditions according to reading status flags
 		# 2. Handle errors 
 		     	ex. Device drawing too much power
+		# (possible errors)
+		# Check FRC and see if it matches the stored value of clock cycles since last intentional reset
+		# Check CC1a, CC1b, CC2a, CC3a, CC4a, CC4b, LCCa, LCCb
+
 	updateTelemetry() 
-		# Update data
+		# Update devices according to data read from PL Bus
 	if(commEnabled): 
 		# Is the sat in communication mode with connected devices
 		processCamData() 
 			# Take data from camera centering and process in RPI
 		updateFSM() 
 			# Update FSM according to data that was processed
+		#The two proccesses above might be a single one
 		updateOthers() 
 			# Update other devices connected to FPGA or rpi
 		sendData() 
@@ -26,6 +32,7 @@ interrupt(planetLabBus):
 	# Data is coming in through PL bus, trigger interupt to handle it
 	setValues(dataFromBus) 
 		# Set values according to data received, return to while loop at end
+"""
 
 """
 General Notes:
