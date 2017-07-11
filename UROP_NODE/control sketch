@@ -1,17 +1,31 @@
 """
-This is pseudocode given by Rodrigo to sketch out how we will first approach the sat control
+This is pseudocode trying to follow Rodrigo's sketch of how we will first approach the sat control
 """
 print('hello you have accessed the control loop')
-"""
+
 while(True): #main control loop
 	readTelemetry()
-		# Read relevant data on RPi and Devices
+		# Read relevant data on RPi and Devices, ask rodrigo about this
 	alarms() 
 		# 1. Check if system is in working conditions according to reading status flags
+		m = errorDetect.start()
+		currents_errors = errorDetect.check_currents(m)
+		counter = errorDetect.clock_cycles_since_reset(m, old_counter) #need to check this number against the one stored since last intentional reset to detect error
+		old_counter = counter
+		#etc...
+		errorDetect.end(m)
+		
+
 		# 2. Handle errors 
-		     	ex. Device drawing too much power
+		     	#ex. Device drawing too much power
+		
+		if currents_errors != 0:
+			##implement currents error handling here
+			handle()
+
 		# (possible errors)
 		# Check FRC and see if it matches the stored value of clock cycles since last intentional reset
+
 		# Check CC1a, CC1b, CC2a, CC3a, CC4a, CC4b, LCCa, LCCb
 
 	updateTelemetry() 
@@ -32,7 +46,6 @@ interrupt(planetLabBus):
 	# Data is coming in through PL bus, trigger interupt to handle it
 	setValues(dataFromBus) 
 		# Set values according to data received, return to while loop at end
-"""
 
 """
 General Notes:
