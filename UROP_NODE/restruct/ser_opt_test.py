@@ -183,7 +183,11 @@ def configure(argList, isNeroCapable, handle, vp):
 
 def opt_alg(argList, fpga):
     #temporary
-    M = 8
+    if argList.ppm:
+        M = int(eval(argList.ppm[0]))
+        print ("Setting PPM order to: ",M)
+        fpga.setPPM_M(M)
+
     if argList.ser:
         if argList.f:
             f = open(argList.f, 'w')
@@ -298,8 +302,8 @@ def opt_alg(argList, fpga):
 
                 f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')         
              
-                #Vary Current by smallest resolution ccc (only start after SER is above noise floor)??
-                if True:    #used to be (tser < 1e-2) but unsure if we should restrict that
+                #Vary Current by smallest resolution ccc (only start after SER is above noise floor)
+                if tser < 1e-2:
                     cser = tser #keep track of current_ser to differentiate from temperature_ser
                     ccc = 0.1
                     ncurrent = ncurrent + ccc
@@ -309,7 +313,7 @@ def opt_alg(argList, fpga):
                     print ("New current: %f, nser: %e" %(ncurrent, nser))
                     f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
          
-        if (nser <= cser) and nser != 0:
+                    if (nser <= cser) and nser != 0:
                         while (nser < cser) and nser != 0 :
                             #safety check  
                             if (ncurrent >= 138):
@@ -346,11 +350,11 @@ def opt_alg(argList, fpga):
 
                 f.write(str(datetime.now())+','+str(ntemp)+','+str(ncurrent)+','+str(nser)+'\n')
                 #If SER reaches minimum, peak power achieved
-                #if (nser <= 1e-5):??
-                print ("Minimum SER reached, algorithm ending; ntemp: %f; ncurrent: %f"%(ntemp,ncurrent))
-                #save temp,current setpoint values
-                f.write(str(ntemp)+','+str(ncurrent)+'\n')
-                break
+                if (nser <= 1e-5):
+                    print ("Minimum SER reached, algorithm ending; ntemp: %f; ncurrent: %f"%(ntemp,ncurrent))
+                    #save temp,current setpoint values
+                    f.write(str(ntemp)+','+str(ncurrent)+'\n')
+                    break
                 #power optimization
             f.close()
         elif (mode == 1):
