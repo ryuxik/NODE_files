@@ -182,7 +182,7 @@ def configure(argList, isNeroCapable, handle, vp):
             raise fl.FLException("Device program requested but device at {} does not support NeroProg".format(vp))
 
 def opt_alg(argList, fpga):
-    #temporary
+    #sets a value for M since it is not a global variable
     if argList.ppm:
         M = int(eval(argList.ppm[0]))
         print ("Setting PPM order to: ",M)
@@ -193,6 +193,7 @@ def opt_alg(argList, fpga):
             f = open(argList.f, 'w')
         else:
             f = open('SER_over_time.csv', 'w')
+
         obslength = float(argList.ser)
         gpib_port = "/dev/ttyUSB0"
         controller = LaserController(gpib_port,20)
