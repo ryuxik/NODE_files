@@ -6,10 +6,10 @@
 """
 import fl
 import time
-from node import NodeFPGA
+from restruct.node import NodeFPGA
 import struct
 
-class tester(object):
+class Tester(object):
 	"""
 	Tester class to send and read from FPGA registers following the memmory map
 	"""

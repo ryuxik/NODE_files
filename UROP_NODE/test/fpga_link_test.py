@@ -7,7 +7,7 @@ import fl
 	This is to test the connection from the rpi to the FPGA board over USB using the fl library. 
 """
 
-class board(object):
+class Board(object):
 	"""
 	FPGA board class
 

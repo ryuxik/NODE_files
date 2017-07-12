@@ -1,5 +1,5 @@
-import test.mmap_test.py as mmap
-from test.constants import ALL_C
+import mmap_test.py as mmap
+from constants import ALL_C
 """
 This is to test the currents of devices during the alarms section of the cotrol code.
 It reports errors when devices are not cosuming the current they should be consuming.
@@ -11,9 +11,7 @@ bounds = {
 			'CC1a': (ALL_C['CC1a_LOW'],ALL_C['CC1a_HIGH']), 'CC1b': (ALL_C['CC1b_LOW'],ALL_C['CC1b_HIGH']), 'CC2a': (ALL_C['CC2a_LOW'],ALL_C['CC2a_HIGH']),
 			'CC2b': (ALL_C['CC2b_LOW'],ALL_C['CC2b_HIGH']), 'CC3a': (ALL_C['CC3a_LOW'],ALL_C['CC3a_HIGH']), 'CC3b': (ALL_C['CC3b_LOW'],ALL_C['CC3b_HIGH']),
 			'CC4a': (ALL_C['CC4a_LOW'],ALL_C['CC4a_HIGH']), 'CC4b': (ALL_C['CC4b_LOW'],ALL_C['CC4b_HIGH']), 'LCCa': (ALL_C['LCCa_LOW'],ALL_C['LCCa_HIGH']),
-			'LCCb': (ALL_C['LCCb_LOW'],ALL_C['LCCb_HIGH'])
-		}
-
+			'LCCb': (ALL_C['LCCb_LOW'],ALL_C['LCCb_HIGH'])}
 
 def code2current(code):
 	"""
@@ -34,12 +32,10 @@ def code2current(code):
  #    	max_code = 2**12 #assuming 12-bit ADC
  #    	V_cc = 3.3 #assuming 3.3V source
  #    	return c*(V_cc/max_code)
-
-
 	pass
 
 def start(old_vid_pid, new_vid_pid):
-	m = mmap.tester(old_vid_pid, new_vid_pid) #initialize memmory map
+	m = mmap.Tester(old_vid_pid, new_vid_pid) #initialize memmory map
 	return m
 
 def end(m):
@@ -61,8 +57,8 @@ def clock_cycles_since_reset(m, old_counter):
 def read_SEM(m):
 	flags = m.read(m.fpga, m.get_addr('SFL'))
 	status = m.read(m.fpga, m.get_addr('SST'))
-
 	return (flags, status)
+
 def check_currents(m):
 	"""
 	Checks that the currents are correct and returns report
@@ -74,7 +70,6 @@ def check_currents(m):
 		0 if no errors
 		out_of_range(list): list of tuples with (location, current) if they are out of bounds
 	"""
-
 	
 	out_of_range = [] #array to hold out of range failures
 	for key in bounds:

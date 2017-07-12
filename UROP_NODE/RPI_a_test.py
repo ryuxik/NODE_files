@@ -5,12 +5,12 @@
 	Acceptance test for the Rasperry Pi Baseboard with the Modulator, Camera, and Bus.
 """
 ## Need to plug into pi and devices to find out info and code it in
-import test.busComm as comm
+import busComm as comm
 import test.fpga_link_test as flink
-import test.mmap_test.py as mmap
+import mmap_test.py as mmap
 from restruct.node import NodeFPGA
 import rpiControls.pinController as pinC
-from test.constants import ALL_C
+from constants import ALL_C
 
 if __name__ == "__main__":
 	testsPassed = False
@@ -34,12 +34,12 @@ if __name__ == "__main__":
 	#Making instances of necessary connections for test
 	
 	##need to find out what type of usb transfer to use for each of these
-	plBusMaster = comm.connection(ALL_C['plBus_vid'],ALL_C['plBus_pid'],ALL_C['plBus_packet_size'],ALL_C['plBus_timeout'], ALL_C['plBus_wendpoint'], ALL_C['plBus_rendpoint'], True)
-	camera = comm.connection(ALL_C['camera_vid'],ALL_C['camera_pid'],ALL_C['camera_packet_size'],ALL_C['camera_timeout'], ALL_C['camera_wendpoint'], ALL_C['camera_rendpoint'])
+	plBusMaster = comm.Connection(ALL_C['plBus_vid'],ALL_C['plBus_pid'],ALL_C['plBus_packet_size'],ALL_C['plBus_timeout'], ALL_C['plBus_wendpoint'], ALL_C['plBus_rendpoint'], True)
+	camera = comm.Connection(ALL_C['camera_vid'],ALL_C['camera_pid'],ALL_C['camera_packet_size'],ALL_C['camera_timeout'], ALL_C['camera_wendpoint'], ALL_C['camera_rendpoint'])
 	
-	mem = mmap.tester(ALL_C['fpga_old_vid_pid'], ALL_C['fpga_new_vid_pid'])
+	mem = mmap.Tester(ALL_C['fpga_old_vid_pid'], ALL_C['fpga_new_vid_pid'])
 
-	init_fpga_board_tester = flink.board(ALL_C['fpga_old_vid_pid'], ALL_C['debug_level'], None)
+	init_fpga_board_tester = flink.Board(ALL_C['fpga_old_vid_pid'], ALL_C['debug_level'], None)
 
 	#Testing intial connection to bus
 	try:
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 		
 	#Testing connection to bus as slave
 	try:
-		plBusSlave = comm.connection(ALL_C['plBus_vid'],ALL_C['plBus_pid'],ALL_C['plBus_packet_size'],ALL_C['plBus_timeout'], ALL_C['plBus_wendpoint'], ALL_C['plBus_rendpoint'])
+		plBusSlave = comm.Connection(ALL_C['plBus_vid'],ALL_C['plBus_pid'],ALL_C['plBus_packet_size'],ALL_C['plBus_timeout'], ALL_C['plBus_wendpoint'], ALL_C['plBus_rendpoint'])
 		results.append(plBusSlave.testConnection(plBus_slave_sendTest, plBus_slave_expectTest))
 	except:
 		results.append('F','Connection to bus as slave failed')

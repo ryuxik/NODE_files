@@ -6,7 +6,7 @@
 """
 import usb.core
 
-class connection:
+class Connection:
 	"""
 	Class to handle communication over USB with devices
 	"""
@@ -43,15 +43,15 @@ class connection:
 		"""
 		Prints device attributes for debugging purposes.
 		"""
-		print('\nbLength: ',d.bLength)
-		print('\nbDescriptorType: ',d.bDescriptorType)
-		print('\nbEndpointAddress: ',d.bEndpointAddress)
-		print('\nbmAttributes: ',d.bmAttributes)
-		print('\nwMaxPacketSize: ',d.wMaxPacketSize)
-		print('\nbInterval: ',d.bInterval)
-		print('\nbRefresh: ',d.bRefresh)
-		print('\nbSynchAddress: ',d.bSynchAddress)
-		print('\nextra_descriptors: ',d.extra_descriptors)
+		print('\nbLength: ', d.bLength)
+		print('\nbDescriptorType: ', d.bDescriptorType)
+		print('\nbEndpointAddress: ', d.bEndpointAddress)
+		print('\nbmAttributes: ', d.bmAttributes)
+		print('\nwMaxPacketSize: ', d.wMaxPacketSize)
+		print('\nbInterval: ', d.bInterval)
+		print('\nbRefresh: ', d.bRefresh)
+		print('\nbSynchAddress: ', d.bSynchAddress)
+		print('\nextra_descriptors: ', d.extra_descriptors)
 
 	def sendData(self): 
 		"""
