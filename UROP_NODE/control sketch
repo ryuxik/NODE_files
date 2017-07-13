@@ -8,20 +8,12 @@ while(True): #main control loop
 		# Read relevant data on RPi and Devices, ask rodrigo about this
 	alarms() 
 		# 1. Check if system is in working conditions according to reading status flags
-		m = errorDetect.start()
-		currents_errors = errorDetect.check_currents(m)
-		counter = errorDetect.clock_cycles_since_reset(m, old_counter) #need to check this number against the one stored since last intentional reset to detect error
-		old_counter = counter
-		#etc...
-		errorDetect.end(m)
-		
-
 		# 2. Handle errors 
 		     	#ex. Device drawing too much power
 		
-		if currents_errors != 0:
+		#if currents_errors != 0:
 			##implement currents error handling here
-			handle()
+			#handle()
 
 		# (possible errors)
 		# Check FRC and see if it matches the stored value of clock cycles since last intentional reset
@@ -47,6 +39,9 @@ interrupt(planetLabBus):
 	setValues(dataFromBus) 
 		# Set values according to data received, return to while loop at end
 
+def alarms():
+	diagnostics = errorDetect.AlarmRaiser()
+	#do something with the diagnostic report
 """
 General Notes:
 	

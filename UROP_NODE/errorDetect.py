@@ -11,24 +11,43 @@ class AlarmRaiser(object):
     This class holds the necessary methods to raise alarms during the alarms section of the control code.
     It checks for correct current consumption, correct clock cycle count, and if optimization is needed.
     """
-	def __init__(self, old_vid_pid, new_vid_pid):
-        self.bounds = self.setupBounds() #bounds dictionary
-        self.m = self.start(old_vid_pid, new_vid_pid) #Tester object
+	def __init__(self, old_counter):
+        self.bounds, self.m  = self.setup()
+        self.old_counter = old_counter
 
-    def setupBounds(self):
+    def __call__(self):
         """
-        Uses ConfigParser to set up the bounds dictionary needed to check the current consumption of devices with known safe bounds
+        Call method for the AlarmRaiser class.
 
         Returns:
-            bounds(dict): dict with current bounds for each device to be checked
+            (list): report of various possble error sources. currents_result is 0 if no errors else list of tuples with failues
+                    clock_cycles_since_reset is 0 if no error, int with other number if else.
+                    oStatus is tbd
         """
+
+        currents_result = self.check_currents()
+        clock_cycles_result = self.clock_cycles_since_reset()
+        oStatus = self.opt_status()
+        self.end()
+        return [currents_result, clock_cycles_since_reset, oStatus]
+
+    def setup(self):
+        """
+        Uses ConfigParser to set up the bounds dictionary needed to check the current consumption of devices with known safe bounds.
+        Also instantiates Tester object.
+
+        Returns:
+            (Tester, bounds(dict)): object necessary for other functions and dict with current bounds for each device to be checked
+        """
+
         Config = ConfigParser.ConfigParser()
         Config.read('args.ini')
         bounds = {} #this dictionary holds the locations to be tested along with their respective bounds for acceptable currents
         opts = Config.options('CurrentBounds')
         for o in opts:
         	bounds[o] = Config.getint('CurrentBounds', o)
-        return bounds
+        
+        return (bounds, mmpa.Tester(Config.get('ConnectionInfo', 'fpga_old_vid_pid'), Config.get('ConnectionInfo', 'fpga_new_vid_pid')))
 
     def opt_status(self):
         """
@@ -57,15 +76,20 @@ class AlarmRaiser(object):
      #    	return c*(V_cc/max_code)
     	pass
 
-    def start(self, old_vid_pid, new_vid_pid):
-    	return mmap.Tester(old_vid_pid, new_vid_pid) #initialize memmory map
-
     def end(self):
     	self.m.end(self.m.fpga) #closes connection to the FPGA that was opened by instantiating the Tester object
 
-    def clock_cycles_since_reset(self, old_counter):
+    def clock_cycles_since_reset(self):
+        """
+        Reads clock cycles since last reset, used to check if unintentional reset took place
+        or if connection to the FPGA board was established if the counter changes over time.
+
+        Returns:
+            counter(int): if counter has not changed, indicates error
+            (int): 0 if counter changed and became smaller or larger
+        """
     	counter = self.m.read(self.m.fpga, self.m.get_addr('FRC'))
-    	if old_counter == counter:
+    	if self.old_counter == counter:
     		#'Error: counter since last reset has not changed, possible comm loss'
     		return counter
     	elif old_counter < counter:
@@ -76,6 +100,9 @@ class AlarmRaiser(object):
     		return 0
 
     def read_SEM(self):
+        """
+        
+        """
     	flags = self.m.read(self.m.fpga, self.m.get_addr('SFL'))
     	status = self.m.read(self.m.fpga, self.m.get_addr('SST'))
     	return (flags, status)
