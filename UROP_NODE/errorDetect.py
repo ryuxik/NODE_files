@@ -1,88 +1,106 @@
 import mmap_test.py as mmap
 import ConfigParser
-from constants import ALL_C
 """
 This is to test the currents of devices during the alarms section of the cotrol code.
 It reports errors when devices are not cosuming the current they should be consuming.
 """
-Config = ConfigParser.ConfigParser()
-Config.read('args.ini')
 
-#this dictionary holds the locations to be tested along with their respective bounds for acceptable currents
-##need to find the lower and upper bound current for each of these and then store the results in an error report
-bounds = {
-			'CC1a': (ALL_C['CC1a_LOW'],ALL_C['CC1a_HIGH']), 'CC1b': (ALL_C['CC1b_LOW'],ALL_C['CC1b_HIGH']), 'CC2a': (ALL_C['CC2a_LOW'],ALL_C['CC2a_HIGH']),
-			'CC2b': (ALL_C['CC2b_LOW'],ALL_C['CC2b_HIGH']), 'CC3a': (ALL_C['CC3a_LOW'],ALL_C['CC3a_HIGH']), 'CC3b': (ALL_C['CC3b_LOW'],ALL_C['CC3b_HIGH']),
-			'CC4a': (ALL_C['CC4a_LOW'],ALL_C['CC4a_HIGH']), 'CC4b': (ALL_C['CC4b_LOW'],ALL_C['CC4b_HIGH']), 'LCCa': (ALL_C['LCCa_LOW'],ALL_C['LCCa_HIGH']),
-			'LCCb': (ALL_C['LCCb_LOW'],ALL_C['LCCb_HIGH'])}
 
-def code2current(code):
+class AlarmRaiser(object):
 	"""
-	Takes data received from a channel and converts it to a current
+    This class holds the necessary methods to raise alarms during the alarms section of the control code.
+    It checks for correct current consumption, correct clock cycle count, and if optimization is needed.
+    """
+	def __init__(self, old_vid_pid, new_vid_pid):
+        self.bounds = self.setupBounds() #bounds dictionary
+        self.m = self.start(old_vid_pid, new_vid_pid) #Tester object
 
-	Args:
-		code(): data received from channel
-	Returns
-		current(double): current derived from code
-	"""
-	##need to implement converter from data read to current
-	##something like this
-	# def code2byte(code):
- #    	fb = code/256
- #    	sb = code%256
- #    	return fb, sb
-	# def code2voltage(c):
- #    	max_code = 2**12 #assuming 12-bit ADC
- #    	V_cc = 3.3 #assuming 3.3V source
- #    	return c*(V_cc/max_code)
-	pass
+    def setupBounds(self):
+        """
+        Uses ConfigParser to set up the bounds dictionary needed to check the current consumption of devices with known safe bounds
 
-def start(old_vid_pid, new_vid_pid):
-	m = mmap.Tester(old_vid_pid, new_vid_pid) #initialize memmory map
-	return m
+        Returns:
+            bounds(dict): dict with current bounds for each device to be checked
+        """
+        Config = ConfigParser.ConfigParser()
+        Config.read('args.ini')
+        bounds = {} #this dictionary holds the locations to be tested along with their respective bounds for acceptable currents
+        opts = Config.options('CurrentBounds')
+        for o in opts:
+        	bounds[o] = Config.getint('CurrentBounds', o)
+        return bounds
 
-def end(m):
-	m.end(m.fpga)
+    def opt_status(self):
+        """
+        Evaluates efficiency of current and temp settings and determines if the optimizer algorithm needs to run.
+        """
+        pass
 
+    def code2current(self, code):
+    	"""
+    	Takes data received from a channel and converts it to a current
 
-def clock_cycles_since_reset(m, old_counter):
-	counter = m.read(m.fpga, m.get_addr('FRC'))
-	if old_counter == counter:
-		#'Error: counter since last reset has not changed, possible comm loss'
-		return counter
-	elif old_counter < counter:
-		#'Counter increased to: ', counter, 'delta: ', (counter- old_counter)
-		return 0
-	else:
-		#'Counter decreased to: ', counter, 'delta: ', (counter-old_counter) 
-		return 0
+    	Args:
+    		code(): data received from channel
+    	Returns
+    		current(double): current derived from code
+    	"""
+    	##need to implement converter from data read to current
+    	##something like this
+    	# def code2byte(code):
+     #    	fb = code/256
+     #    	sb = code%256
+     #    	return fb, sb
+    	# def code2voltage(c):
+     #    	max_code = 2**12 #assuming 12-bit ADC
+     #    	V_cc = 3.3 #assuming 3.3V source
+     #    	return c*(V_cc/max_code)
+    	pass
 
-def read_SEM(m):
-	flags = m.read(m.fpga, m.get_addr('SFL'))
-	status = m.read(m.fpga, m.get_addr('SST'))
-	return (flags, status)
+    def start(self, old_vid_pid, new_vid_pid):
+    	return mmap.Tester(old_vid_pid, new_vid_pid) #initialize memmory map
 
-def check_currents(m):
-	"""
-	Checks that the currents are correct and returns report
+    def end(self):
+    	self.m.end(self.m.fpga) #closes connection to the FPGA that was opened by instantiating the Tester object
 
-	Args:
-		old_vid_pid(): vendor and product id
-		new_vid_pid(): vendor and product id
-	Returns
-		0 if no errors
-		out_of_range(list): list of tuples with (location, current) if they are out of bounds
-	"""
-	
-	out_of_range = [] #array to hold out of range failures
-	for key in bounds:
-		data = m.read(m.fpga, m.get_addr(key))
-		current = code2current(data)
-		if current < bounds[key][0] or current > bounds[key][1]:
-			out_of_range.append((key, current))
-	if len(out_of_range) > 0:
-		return out_of_range
-	return 0
+    def clock_cycles_since_reset(self, old_counter):
+    	counter = self.m.read(self.m.fpga, self.m.get_addr('FRC'))
+    	if old_counter == counter:
+    		#'Error: counter since last reset has not changed, possible comm loss'
+    		return counter
+    	elif old_counter < counter:
+    		#'Counter increased to: ', counter, 'delta: ', (counter- old_counter)
+    		return 0
+    	else:
+    		#'Counter decreased to: ', counter, 'delta: ', (counter-old_counter) 
+    		return 0
+
+    def read_SEM(self):
+    	flags = self.m.read(self.m.fpga, self.m.get_addr('SFL'))
+    	status = self.m.read(self.m.fpga, self.m.get_addr('SST'))
+    	return (flags, status)
+
+    def check_currents(self):
+    	"""
+    	Checks that the currents are correct and returns report
+
+    	Args:
+    		old_vid_pid(): vendor and product id
+    		new_vid_pid(): vendor and product id
+    	Returns
+    		0 if no errors
+    		out_of_range(list): list of tuples with (location, current) if they are out of bounds
+    	"""
+    	
+    	out_of_range = [] #array to hold out of range failures
+    	for key in self.bounds:
+    		data = self.m.read(self.m.fpga, self.m.get_addr(key))
+    		current = self.code2current(data)
+    		if current < self.bounds[key][0] or current > self.bounds[key][1]:
+    			out_of_range.append((key, current))
+    	if len(out_of_range) > 0:
+    		return out_of_range
+    	return 0
 
 
 
