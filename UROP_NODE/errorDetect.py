@@ -1,9 +1,12 @@
 import mmap_test.py as mmap
+import ConfigParser
 from constants import ALL_C
 """
 This is to test the currents of devices during the alarms section of the cotrol code.
 It reports errors when devices are not cosuming the current they should be consuming.
 """
+Config = ConfigParser.ConfigParser()
+Config.read('args.ini')
 
 #this dictionary holds the locations to be tested along with their respective bounds for acceptable currents
 ##need to find the lower and upper bound current for each of these and then store the results in an error report
