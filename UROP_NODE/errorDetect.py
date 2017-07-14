@@ -47,7 +47,7 @@ class AlarmRaiser(object):
         for o in opts:
         	bounds[o] = Config.getint('CurrentBounds', o)
         
-        return (bounds, mmpa.Tester(Config.get('ConnectionInfo', 'fpga_old_vid_pid'), Config.get('ConnectionInfo', 'fpga_new_vid_pid')))
+        return (bounds, mmpa.Tester())
 
     def opt_status(self):
         """
@@ -77,7 +77,7 @@ class AlarmRaiser(object):
     	pass
 
     def end(self):
-    	self.m.end(self.m.fpga) #closes connection to the FPGA that was opened by instantiating the Tester object
+    	self.m.end() #closes connection to the FPGA that was opened by instantiating the Tester object
 
     def clock_cycles_since_reset(self):
         """
@@ -88,7 +88,7 @@ class AlarmRaiser(object):
             counter(int): if counter has not changed, indicates error
             (int): 0 if counter changed and became smaller or larger
         """
-    	counter = self.m.read(self.m.fpga, self.m.get_addr('FRC'))
+    	counter = self.m.read(self.m.get_addr('FRC'))
     	if self.old_counter == counter:
     		#'Error: counter since last reset has not changed, possible comm loss'
     		return counter
@@ -103,8 +103,8 @@ class AlarmRaiser(object):
         """
         
         """
-    	flags = self.m.read(self.m.fpga, self.m.get_addr('SFL'))
-    	status = self.m.read(self.m.fpga, self.m.get_addr('SST'))
+    	flags = self.m.read(self.m.get_addr('SFL'))
+    	status = self.m.read(self.m.get_addr('SST'))
     	return (flags, status)
 
     def check_currents(self):
@@ -121,7 +121,7 @@ class AlarmRaiser(object):
     	
     	out_of_range = [] #array to hold out of range failures
     	for key in self.bounds:
-    		data = self.m.read(self.m.fpga, self.m.get_addr(key))
+    		data = self.m.read(self.m.get_addr(key))
     		current = self.code2current(data)
     		if current < self.bounds[key][0] or current > self.bounds[key][1]:
     			out_of_range.append((key, current))

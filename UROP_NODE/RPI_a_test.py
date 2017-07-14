@@ -44,7 +44,7 @@ if __name__ == "__main__":
     camera = comm.Connection(
                                 commInfo['camera_vid'], commInfo['camera_pid'], commInfo['camera_packet_size'],
                                 commInfo['camera_timeout'], commInfo['camera_wendpoint'], commInfo['camera_rendpoint'])
-	mem = mmap.Tester(commInfo['fpga_old_vid_pid'], commInfo['fpga_new_vid_pid'])
+	mem = mmap.Tester()
 	init_fpga_board_tester = flink.Board(commInfo['fpga_old_vid_pid'], commInfo['debug_level'], None)
 	
     try:   #Testing intial connection to bus

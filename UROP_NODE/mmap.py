@@ -6,17 +6,18 @@
 """
 import fl
 import time
-from restruct.node import NodeFPGA
-import struct
+import ConfigParser
 
 class Tester(object):
 	"""
 	Tester class to send and read from FPGA registers following the memmory map
 	"""
 	def __init__(self, old_vid_pid, new_vid_pid):
-		self.old_vid_pid = old_vid_pid
-		self.new_vid_pid = new_vid_pid
-		self.fpga = self.start()
+		Config = ConfigParser.ConfigParser()
+    	Config.read('args.ini')
+		self.old_vid_pid = Config.get('ConnectionInfo', 'fpga_old_vid_pid')
+		self.new_vid_pid = Config.get('ConnectionInfo', 'fpga_new_vid_pid')
+		self.handle = self.start()
 		self.on_code = 0x55
 		self.off_code = 0x0F
 		#format is id(6 bits?), address(1 byte), r/w (ro = 0b00, rw = 0b11), value = (varies)
@@ -97,16 +98,16 @@ class Tester(object):
 
 	def start(self):
 		"""
-		Creates NodeFGA object, opens connection to FPGA board, and loads it with standard firmware.
+		Opens connection to FPGA board, and loads it with standard firmware.
 
 		Returns:
-			(NodeFPGA): object representing fpga board
+			(handle): id representing fpga board
 		"""
 		fl.flInitialise(0)
 		fl.flLoadStandardFirmware(old_vid_pid, new_vid_pid)
 		time.sleep(3) #this should be fl.flAwaitDevice(), but according to past contributor, it didn't work
 		handle = fl.flOpen(self.new_vid_pid)
-		return NodeFPGA(handle)
+		return handle
 
 	def get_addr(self, name):
 		"""
@@ -130,16 +131,16 @@ class Tester(object):
 		"""
 		return self.addresses[name][1]
 
-	def end(self, fpga):
+	def end(self):
 		"""
 		Closes connection to FPGA board.
 
 		Args:
 			fpga(NodeFPGA): object representing fpga board
 		"""
-		fl.flClose(fpga.handle) 
+		fl.flClose(self.handle) 
 
-	def test_read(fpga, channel, expected):
+	def test_read(self, channel, expected):
 		"""
 		Compares data read from channel to what is expected from channel
 
@@ -149,26 +150,33 @@ class Tester(object):
 		Returns:
 			(boolean): True if expected matches what is read, else false
 		"""
-		return expected == fl.flReadChannel(fpga.handle, channel)
+		return expected == fl.flReadChannel(self.handle, channel)
 
-	def read(fpga, channel):
-		return fl.flReadChannel(fpga.handle, channel)
+	def read(self, channel):
+		return fl.flReadChannel(self.handle, channel)
 
-	def test_write(fpga, channel, data):
+	def readAll(self):
+		key_to_data = {}
+		for key in self.addresses:
+			for value in self.addresses[key]:
+				key_to_data[key] = self.read(value[0])
+		return key_to_data
+
+
+	def test_write(self, channel, data):
 		"""
 		Tests writing to a specified location in mem map using the channel and then checks the response of the board
 
 		Args:
-			fpga(NodeFPGA): object representing fpga board
 			channel(int): counduit channel to communicate to fpga board
 			data(): data to be written to fpga board through specified channel
 		Returns:
 			(boolean): result from test_read
 		"""
-		fl.flWriteChannel(fpga.handle,channel, data)
+		fl.flWriteChannel(self.handle,channel, data)
 		#not sure how to format data yet to test a read to loc that was written to
 		#but the idea should be similar to this
-		return test_read(fpga, channel, data)
+		return self.test_read(channel, data)
 
 	def test(self, progConfig):
 		"""
@@ -185,14 +193,14 @@ class Tester(object):
 		
 
 		#implement tests using memmory map here and append results in correct format to res to be passed to RPI_a_test
-		fl.flProgram(self.fpga.handle, progConfig)
+		fl.flProgram(self.handle, progConfig)
 		#fl.flLoadStandardFirmware(self.fpga.handle, progConfig)
-		if fl.IsFPGARunning(self.fpga.handle):
+		if fl.IsFPGARunning(self.handle):
 			pass
 			#need to check all mem map locs and either test rw or ro
 			#then append ('P', 'Pass report'), or ('F', 'Fail report') to res
 
-		self.end(self.fpga)
+		self.end()
 		return res
 
 
