@@ -109,7 +109,7 @@ class Tester(object):
 		handle = fl.flOpen(self.new_vid_pid)
 		return handle
 
-	def get_addr(self, name):
+	def getAddress(self, name):
 		"""
 		Gets addresss of given name
 
@@ -120,7 +120,7 @@ class Tester(object):
 		"""
 		return self.addresses[name][0]
 
-	def get_type(self, name):
+	def getType(self, name):
 		"""
 		Gets type of given name
 

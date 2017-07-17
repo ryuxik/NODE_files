@@ -80,12 +80,12 @@ def readPin(pin):
 		return 1
 	return 0
 
-def make_bus_slave():
+def makeBusSlave():
 	"""
 	Makes the pl bus a slave (connected to rpi thru usb 1.1)
 	"""
 	readyBoard()
-	if not is_bus_slave():
+	if not isBusSlave():
 		setPinLow('28')
 		setPinLow('29')
 	GPIO.cleanup() #unsure about this line
@@ -95,12 +95,12 @@ def make_bus_master():
 	Makes the pl bus a master (connected to rpi thru usb 2.0) 
 	"""
 	readyBoard()
-	if not is_bus_master():
+	if not isBusMaster():
 		setPinHigh('28')
 		setPinHigh('29')
 	GPIO.cleanup() #unsure about this line
 
-def is_bus_master():
+def isBusMaster():
 	"""
 	Checks if pl bus is master (connected to rpi thru usb 2.0)
 	
@@ -109,7 +109,7 @@ def is_bus_master():
 	"""
 	return 0 == readPin('28') and 0 == readPin('29')
 
-def is_bus_slave():
+def isBusSlave():
 	"""
 	Checks if pl bus is slave (connected to rpi thru usb 1.1)
 	
@@ -119,8 +119,8 @@ def is_bus_slave():
 	return 1 == readPin('28') and 1 == readPin('29')
 def main():
 	try:
-		make_bus_slave()
-		if is_bus_slave():
+		makeBusSlave()
+		if isBusSlave():
 			return 'P', 'Pl bus was made slave'
 	except:
 		return 'F', 'Pl bus was not made slave'

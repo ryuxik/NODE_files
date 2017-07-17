@@ -26,11 +26,11 @@ class AlarmRaiser(object):
                     oStatus is tbd
         """
 
-        currents_result = self.check_currents()
-        clock_cycles_result = self.clock_cycles_since_reset()
-        oStatus = self.opt_status()
+        currents_result = self.checkCurrents()
+        clock_cycles_result = self.clockCyclesSinceReset()
+        o_status = self.optStatus()
         self.end()
-        return [currents_result, clock_cycles_since_reset, oStatus]
+        return [currents_result, clock_cycles_result, o_status]
 
     def setup(self):
         """
@@ -49,7 +49,7 @@ class AlarmRaiser(object):
         	bounds[o] = Config.getint('CurrentBounds', o)
         return bounds
 
-    def opt_status(self):
+    def optStatus(self):
         """
         Evaluates efficiency of current and temp settings and determines if the optimizer algorithm needs to run.
         """
@@ -73,7 +73,7 @@ class AlarmRaiser(object):
     	##something like this
     	pass
 
-    def clock_cycles_since_reset(self):
+    def clockCyclesSinceReset(self):
         """
         Reads clock cycles since last reset, used to check if unintentional reset took place
         or if connection to the FPGA board was established if the counter changes over time.
@@ -93,7 +93,7 @@ class AlarmRaiser(object):
     		#'Counter decreased to: ', counter, 'delta: ', (counter-old_counter) 
     		return 0
 
-    def read_SEM(self):
+    def readSEM(self):
         """
         
         """
@@ -101,13 +101,10 @@ class AlarmRaiser(object):
     	status = self.data['SST']
     	return (flags, status)
 
-    def check_currents(self):
+    def checkCurrents(self):
     	"""
     	Checks that the currents are correct and returns report
 
-    	Args:
-    		old_vid_pid(): vendor and product id
-    		new_vid_pid(): vendor and product id
     	Returns
     		0 if no errors
     		out_of_range(list): list of tuples with (location, current) if they are out of bounds

@@ -121,7 +121,7 @@ try:
         code = curr/(4.096*1.1*((1/6.81)+(1/16500)))*4096
         first_byte, second_byte = code2bytes(code)
         spi_data = [first_byte, second_byte]
-        update_SPI(handle, [mem_map.get_addr('LCCa'),mem_map.get_addr('LCCb')], spi_data) ####
+        update_SPI(handle, [mem_map.getAddress('LCCa'),mem_map.getAddress('LCCb')], spi_data) ####
         #Test reading LD Bias (channels 64 and 65)
         rx_bias = read_SPI(handle, [100,101])
         for r in rx_bias:
@@ -140,10 +140,10 @@ try:
         V_set = Vcc/(((m.exp(B/T)*(R_0 * m.exp(-B/T_0)))/R_known)+1)
         V_code = voltage2code(V_set) #convert voltage to code
         fb, sb = code2byte(V_code) #convert code to bytes
-        update_SPI(handle, [mem_map.get_addr('LTSa'),mem_map.get_addr('LTSb')], [fb, sb])
+        update_SPI(handle, [mem_map.getAddress('LTSa'),mem_map.getAddress('LTSb')], [fb, sb])
 
         #reading temp
-        bytes__meas = read_SPI(handle, [mem_map.get_addr('LTMa'),mem_map.get_addr('LTMb')]) #read ADC value
+        bytes__meas = read_SPI(handle, [mem_map.getAddress('LTMa'),mem_map.getAddress('LTMb')]) #read ADC value
         code_meas = bytes_meas[1]*256 + bytes_meas[0]#convert bytes to double
 		V_meas = code2voltage(code_meas) #convert ADC to voltage
 
@@ -156,7 +156,7 @@ try:
         A = 3.81e-3 #from datasheet
         B = -6.02e-7 #from datasheet
         R_t0 = 1000
-        T_bm = read_SPI(handle, [mem_map.get_addr('TE1a'),mem_map.get_addr('TE1b')]) #temp code measured
+        T_bm = read_SPI(handle, [mem_map.getAddress('TE1a'),mem_map.getAddress('TE1b')]) #temp code measured
 		T_cm = 256*T_bm[1] + T_bm[0] #convert bytes to double
         T_meas = code2voltage(T_cm) #convert ADC to voltage
         R_T = R_known * (Vcc/T_meas - 1)
