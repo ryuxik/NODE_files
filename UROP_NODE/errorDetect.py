@@ -71,14 +71,6 @@ class AlarmRaiser(object):
     	"""
     	##need to implement converter from data read to current
     	##something like this
-    	# def code2byte(code):
-     #    	fb = code/256
-     #    	sb = code%256
-     #    	return fb, sb
-    	# def code2voltage(c):
-     #    	max_code = 2**12 #assuming 12-bit ADC
-     #    	V_cc = 3.3 #assuming 3.3V source
-     #    	return c*(V_cc/max_code)
     	pass
 
     def clock_cycles_since_reset(self):

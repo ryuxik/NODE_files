@@ -18,7 +18,11 @@ def interrupt():
 									config.get('ConnectionInfo', 'plBus_wendpoint'), config.get('ConnectionInfo', 'plBus_rendpoint'))
 
 	dataFromBus = connection.updateReceived()
-	setValues(dataFromBus) #Set values according to data received
+	valid = False
+	#need to check if data is valid command, then set valid to true
+
+	if valid:
+		setValues(dataFromBus) #Set values according to data received
 		
 def setValues(dataFromBus):
 	"""
@@ -55,6 +59,7 @@ def readTelemetry():
     return data
 
 def updateTelemetry():
+	#not sure what this means yet
 	pass
 
 ##the following two functions probably will be merged into 1, these will use Ondrej's code
@@ -93,6 +98,7 @@ def errorHandle(diagnostics):
 	Args:
 		diagnostics(list): list containing error reports
 	"""
+	##do something with diagnostics 0 and 1.
 	if diagnostics[2]: #checks if optimization is needed, may need more conditions to actually run optimization.
 		optimize()
 
@@ -106,16 +112,16 @@ def main(old_counter=0):
 		updateTelemetry() ##Ask rodrigo about this part!
 		
 		if(commEnabled): #Is the sat in communication mode with connected devices
-		##make logic for determining commEnabled!	
+		##make logic for determining commEnabled!, may be set by data read from PL	
 			processCamData() #Take data from camera centering and process in RPI
 			updateFSM() #Update FSM according to data that was processed
 			##The two proccesses above might be a single one, ask for clarification
 			updateOthers() #Update other devices connected to FPGA or rpi
 			sendData() #Send data to PL if this is needed
 
-		if(planetLabBus): #if there is information incoming from PL
+		#if there is information incoming from PL
 		## might need to implement this in a different way depending on the latency, ex. break while loop and handle immediately if necessary
-			interrupt() #Read incoming data and then return to while loop
+		interrupt() #Read incoming data and then return to while loop
 
 if __name__ == '__main__':
 	main()
