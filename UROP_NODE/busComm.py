@@ -77,6 +77,7 @@ class Connection:
 		"""
 		r = self.d.read(self.rendpoint,self.packet_size,self.timeout) #replace 0x81 with correct endpoint
 		self.received = ''.join([chr(i) for i in r]) # change this line to format message received appropriately
+		return self.received
 
 	def testConnection(self, to_send, to_receive):
 		try:

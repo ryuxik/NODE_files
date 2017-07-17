@@ -1,5 +1,5 @@
-import mmap_test.py as mmap
 import ConfigParser
+
 """
 This is to test the currents of devices during the alarms section of the cotrol code.
 It reports errors when devices are not cosuming the current they should be consuming.
@@ -11,9 +11,10 @@ class AlarmRaiser(object):
     This class holds the necessary methods to raise alarms during the alarms section of the control code.
     It checks for correct current consumption, correct clock cycle count, and if optimization is needed.
     """
-	def __init__(self, old_counter):
-        self.bounds, self.m  = self.setup()
+	def __init__(self, old_counter, data):
+        self.bounds = self.setup()
         self.old_counter = old_counter
+        self.data = data
 
     def __call__(self):
         """
@@ -46,14 +47,18 @@ class AlarmRaiser(object):
         opts = Config.options('CurrentBounds')
         for o in opts:
         	bounds[o] = Config.getint('CurrentBounds', o)
-        
-        return (bounds, mmpa.Tester())
+        return bounds
 
     def opt_status(self):
         """
         Evaluates efficiency of current and temp settings and determines if the optimizer algorithm needs to run.
         """
-        pass
+
+        #check SER to be below 1 *10^-5
+        ser = None
+        if ser > 1**(-5):
+        	return True
+        return False
 
     def code2current(self, code):
     	"""
@@ -76,9 +81,6 @@ class AlarmRaiser(object):
      #    	return c*(V_cc/max_code)
     	pass
 
-    def end(self):
-    	self.m.end() #closes connection to the FPGA that was opened by instantiating the Tester object
-
     def clock_cycles_since_reset(self):
         """
         Reads clock cycles since last reset, used to check if unintentional reset took place
@@ -88,7 +90,7 @@ class AlarmRaiser(object):
             counter(int): if counter has not changed, indicates error
             (int): 0 if counter changed and became smaller or larger
         """
-    	counter = self.m.read(self.m.get_addr('FRC'))
+    	counter = self.data['FRC']
     	if self.old_counter == counter:
     		#'Error: counter since last reset has not changed, possible comm loss'
     		return counter
@@ -103,8 +105,8 @@ class AlarmRaiser(object):
         """
         
         """
-    	flags = self.m.read(self.m.get_addr('SFL'))
-    	status = self.m.read(self.m.get_addr('SST'))
+    	flags = self.data['SFL']
+    	status = self.data['SST']
     	return (flags, status)
 
     def check_currents(self):
@@ -121,8 +123,8 @@ class AlarmRaiser(object):
     	
     	out_of_range = [] #array to hold out of range failures
     	for key in self.bounds:
-    		data = self.m.read(self.m.get_addr(key))
-    		current = self.code2current(data)
+    		d = self.data[key]
+    		current = self.code2current(d)
     		if current < self.bounds[key][0] or current > self.bounds[key][1]:
     			out_of_range.append((key, current))
     	if len(out_of_range) > 0:
