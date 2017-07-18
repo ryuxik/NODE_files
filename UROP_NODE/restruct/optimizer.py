@@ -13,7 +13,7 @@ class Optimizer(object):
     def __init__(self, handle, fpga, argList_i, argList_p):
         self.handle = handle
         self.fpga = fpga
-        self.mem_map = tester(argList_i, argList_p)
+        self.mem_map = Tester(argList_i, argList_p)
 
         #Initiate TEC seed laser operating point parameters
         self.temp = 0

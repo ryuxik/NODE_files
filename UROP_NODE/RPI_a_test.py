@@ -56,7 +56,7 @@ if __name__ == "__main__":
 	except:
 		results.append('F','Connection to camera failed')
 	try:   #Testing connection to FPGA board
-		results.extend(init_fpga_board_tester.init_com_test()) #run tests and return list of to extend results report
+		results.extend(init_fpga_board_tester.initComTest()) #run tests and return list of to extend results report
 	except:
 		results.append('F','FPGA inital connection test failed to run.')
 	try:   #Make tests using memmory map here!!

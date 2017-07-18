@@ -5,6 +5,7 @@ import errorDetect
 import mmap
 import busComm
 import ConfigParser
+import optimizer
 
 def interrupt():
 	"""
@@ -19,17 +20,17 @@ def interrupt():
 
 	dataFromBus = connection.updateReceived()
 	valid = False
-	#need to check if data is valid command, then set valid to true
+	##need to check if data is valid command, then set valid to true
 
 	if valid:
 		setValues(dataFromBus) #Set values according to data received
 		
 def setValues(dataFromBus):
 	"""
-	Parse bin data from PL and do things with data
+	Parse data from PL and do things with data
 
 	Args:
-		dataFromBus()
+		dataFromBus(): data received from PL
 	"""
 
 	##need information about the format of the data!!
@@ -89,7 +90,7 @@ def optimize():
 	"""
 	Optimizes current and temperature for power efficiency.
 	"""
-	pass
+	
 
 def errorHandle(diagnostics):
 	"""

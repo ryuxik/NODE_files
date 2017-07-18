@@ -24,7 +24,7 @@ class Board(object):
 		else:
 			self.conduit = conduit
 		
-	def init_com_test(self):
+	def initComTest(self):
 	"""
 	Test intial connection capabilities to FPGA board over USB.
 
