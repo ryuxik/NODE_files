@@ -61,7 +61,7 @@ def readFile(fileName):
                 break
 
 
-def get_args(data_to_write, write_times):
+def get_args():
     """
     Gets neccessary args to communicate and program FPGA board.
 
@@ -75,8 +75,8 @@ def get_args(data_to_write, write_times):
     argList['fpga_vid_pid_did'] = Config.get('ConnectionInfo', 'fpga_vid_pid_did')
     argList['jtag_chain_port_config'] = Config.get('ConnectionInfo', 'jtag_chain_port_config')
     argList['progConfig'] = Config.get('ConfigurationFiles', 'progConfig')
-    argList['dataToWrite'] = data_to_write #not sure what type of binary data this would be or if it should be in the args.ini file
-    argList['write_times'] = write_times #not sure where this should come from, probably depends on the data to write
+    argList['dataToWrite'] = Config.get('ConnectionInfo', 'data_to_write') #not sure what type of binary data this would be or if it should be in the args.ini file
+    argList['write_times'] = Config.get('ConnectionInfo', 'write_times') #not sure where this should come from, probably depends on the data to write
     argList['ppmOrder'] = Config.get('ConnectionInfo', 'ppm_order')
     argList['dac_setting'] = Config.get('ConnectionInfo', 'dac_setting')
     argList['tx_delay'] = Config.get('ConnectionInfo', 'tx_delay')
@@ -239,6 +239,31 @@ def read_SPI(handle, channels):
     rxm = fl.flReadChannel(handle, MSB_channel)
     rxl = fl.flReadChannel(handle, LSB_channel)
     return [rxm, rxl]
+
+def openComm():
+    argList = get_args()
+    handle = fl.FLHandle()
+    try:
+        fpga_vid_pid_did = argList['fpga_vid_pid_did']
+        try:
+            handle = fl.flOpen(fpga_vid_pid_did)
+        except fl.FLException as ex:
+            fpga_vid_pid = argList['fpga_vid_pid']
+            fl.flLoadStandardFirmware(fpga_vid_pid, fpga_vid_pid_did)
+            #might need to add delay here
+            if not fl.flAwaitDevice(fpga_vid_pid, 10000):
+                raise fl.FLException('FPGALink device did not renumerate properly')
+            handle = fl.flOpen(fpga_vid_pid_did)
+        isNeroCapable = fl.flIsNeroCapable(handle)
+        isCommCapable = fl.flIsCommCapable(handle, 1)
+        fl.flSelectConduit(handle, 1)
+        if isCommCapable and fl.flIsFPGARunning(handle):
+            return (NodeFPGA(handle), handle, Optimizer(handle, fpga))
+        else:
+            return None #open comm failed
+
+def closeComm(handle):
+    fl.flClose(handle)
 
 #main function of the old SPI_test
 #need to fix so this uses Optimizer object and mem map properly

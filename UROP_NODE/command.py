@@ -6,6 +6,7 @@ import mmap
 import busComm
 import ConfigParser
 import optimizer
+import configControl
 
 def interrupt():
 	"""
@@ -54,6 +55,7 @@ def readTelemetry():
 	Returns:
 		data(dict): memmory map location name to data read
 	"""
+
 	t = mmap.Tester()
     data = t.readAll()
     t.end()
@@ -86,12 +88,29 @@ def sendData():
 	connection.updateData(data) #updates data held by object and sends it to PL Bus, might not actually need this!
 	##figure out how to actually send data!! try using code from node or control
 
-def optimize():
+def optimize(ser):
 	"""
 	Optimizes current and temperature for power efficiency.
+
+	Args:
+		ser(float): slot error rate, needed for condition
 	"""
 	
+	try: #need to open connection
+		fpga, handle, opt = configControl.openComm() #opens connection and returns fpga, handle, and optimizer objects
+		#make call to optimize here in whichever mode is most appropriate depending on efficiency
+		condition = None #implement condition for just scan or dither mode not sure which
+		if condition:
+			obslength = None #Don't know what this is yet
+			opt.dither_mode(obslength)
+		else:
+			opt.scan_mode(obslength)
+		
+		configControl.closeComm() #closes communication to fpga
 
+	except: #connection open failed :(
+		raise ConnectionError('Connection to the fpga failed')
+		
 def errorHandle(diagnostics):
 	"""
 	Corrects errors detected by diagnostics report from alarms(). Inlcudes call to optimization if necessary.
@@ -100,8 +119,15 @@ def errorHandle(diagnostics):
 		diagnostics(list): list containing error reports
 	"""
 	##do something with diagnostics 0 and 1.
-	if diagnostics[2]: #checks if optimization is needed, may need more conditions to actually run optimization.
-		optimize()
+	if diagnostics[0] != 0: #a device is taking too much current
+		#figure out what to do with the list of devices
+		pass
+
+	if diagnostics[1] != 0:
+		pass #figure out what to do in this scenario
+		#connection to the FPGA may have been lost
+	if diagnostics[2][0]: #checks if optimization is needed, may need more conditions to actually run optimization.
+		optimize(diagnostics[2][1])
 
 def main(old_counter=0):
 	planetLabBus = False

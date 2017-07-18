@@ -57,7 +57,7 @@ class AlarmRaiser(object):
         #check SER to be below 1 *10^-5
         ser = None
         if ser > 1**(-5):
-        	return True
+        	return (True, ser)
         return False
 
     def code2current(self, code):
@@ -71,6 +71,7 @@ class AlarmRaiser(object):
     	"""
     	##need to implement converter from data read to current
     	##something like this
+        #### LOOK AT DATA SHEETS TO FIGURE OUT CONVERSIONS
     	pass
 
     def clockCyclesSinceReset(self):

@@ -1,5 +1,5 @@
 # NODE FPGA class
-## fix channels in this class, are now outdated
+## fix channels in this class, are now outdated?
 
 import fl
 import time
