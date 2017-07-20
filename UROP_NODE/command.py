@@ -44,6 +44,8 @@ def alarms(old_counter, data):
 	Args:
 		old_counter(int): clock cycle count read last loop
 		data(dict): memmory map location name to data read
+	Returns: 
+		diagnostics(list): 
 	"""
 	diagnostics = errorDetect.AlarmRaiser(old_counter, data)
 	return diagnostics
@@ -61,9 +63,23 @@ def readTelemetry():
     t.end()
     return data
 
-def updateTelemetry():
-	#not sure what this means yet
-	pass
+def updateTelemetry(data, diagnostics):
+	"""
+	Writes out telemetry to file so that PL can read it since we are configured as a slave
+	"""
+	f = open('telemetry','w')
+	
+	f.write('Data Read')
+	for key in data: #mem_map loc to data read report
+		new_line = key + ': ' + new_line[key] + '\n'
+		f.write(new_line)
+	
+	f.write('Diagnostics')
+	for tup in diagnostics[0]: #current draw error reports
+		new_line = 'Current draw error at: ' + tup[0] + ' with value: ' + tup[1] + '\n'
+		f.write(new_line)
+
+	f.close()
 
 ##the following two functions probably will be merged into 1, these will use Ondrej's code
 def processCamData():
@@ -106,8 +122,7 @@ def optimize(ser):
 		else:
 			opt.scan_mode(obslength)
 		
-		configControl.closeComm() #closes communication to fpga
-
+		configControl.closeComm(handle) #closes communication to fpga
 	except: #connection open failed :(
 		raise ConnectionError('Connection to the fpga failed')
 		
@@ -118,25 +133,34 @@ def errorHandle(diagnostics):
 	Args:
 		diagnostics(list): list containing error reports
 	"""
-	##do something with diagnostics 0 and 1.
-	if diagnostics[0] != 0: #a device is taking too much current
-		#figure out what to do with the list of devices
-		pass
+	if diagnostics[0] != 0: #a device is taking too much current #list should be locations, PO1 PO2 PO3 PO4
+		#switch off any device drawing too much power
+		fpga, handle, opt = configControl.openComm()
+		for loc in diagnostics[0]: #power each device off and on
+			configControl.powerOff(handle, loc)
+			configControl.powerOn(handle, loc)
 
-	if diagnostics[1] != 0:
-		pass #figure out what to do in this scenario
-		#connection to the FPGA may have been lost
+	if diagnostics[1] != 0: #connection to the FPGA may have been lost
+		isAwake = False
+		while not isAwake: #atttempt to reconnect until FPGA responds
+			attempt = configControl.openComm()
+			if attempt != None:
+				isAwake = True
+				configControl.closeComm()
+		main()
+
 	if diagnostics[2][0]: #checks if optimization is needed, may need more conditions to actually run optimization.
 		optimize(diagnostics[2][1])
 
+#This main loop may be modified depending on the satellite's mode
 def main(old_counter=0):
 	planetLabBus = False
 	while(True): #main control loop
 		data = readTelemetry() #Read relevant data on RPi and Devices
 		diagnostics = alarms(old_counter, data) #Check if system is in working conditions according to reading status fla
 		old_counter = data['FRC'] #Set old counter to # clock cycles last read
+		updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
 		errorHandle(diagnostics) #Handle errors  
-		updateTelemetry() ##Ask rodrigo about this part!
 		
 		if(commEnabled): #Is the sat in communication mode with connected devices
 		##make logic for determining commEnabled!, may be set by data read from PL	
@@ -158,4 +182,6 @@ General Notes:
 	
 	Need to figure out how to communicate with PL Bus as slave, how to handle interrupts. Check if there is a FIFO at bus to act as buffer if data is received during control
 	loop or if an immediate interrupt is required to handle incoming data without loss.
+
+	ONdrejs loop will always be running
 """

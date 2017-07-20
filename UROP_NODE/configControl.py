@@ -34,7 +34,7 @@ import sys
 import math as m
 from bench import LaserController
 from optimizer import Optimizer
-from mmap import tester
+import mmap 
 
 #Also not sure where this DEBUG is used
 #DEBUG = False
@@ -265,6 +265,12 @@ def openComm():
 def closeComm(handle):
     fl.flClose(handle)
 
+def powerOn(handle, channelName):
+    fl.flWriteChannel(handle, mmap.KEY_TO_LOC[channelName], 0x55)
+
+def powerOff(handle, channelName):
+    fl.flWriteChannel(handle, mmap.KEY_TO_LOC[channelName], 0x0F)
+
 #main function of the old SPI_test
 #need to fix so this uses Optimizer object and mem map properly
 def SPImain():
@@ -280,7 +286,7 @@ def SPImain():
             ivp = argList['fpga_vid_pid']
             print("Loading firmware into {}...".format(ivp))
             fl.flLoadStandardFirmware(ivp, vp)
-            mem_map = Tester(ivp, vp)
+            mem_map = mmap.Tester(ivp, vp)
 
             # Long delay for renumeration
             # TODO: fix this hack.  The timeout value specified in flAwaitDevice() below doesn't seem to work

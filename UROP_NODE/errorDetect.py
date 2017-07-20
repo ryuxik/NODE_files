@@ -46,7 +46,7 @@ class AlarmRaiser(object):
         bounds = {} #this dictionary holds the locations to be tested along with their respective bounds for acceptable currents
         opts = Config.options('CurrentBounds')
         for o in opts:
-        	bounds[o] = Config.getint('CurrentBounds', o)
+        	bounds[o] = Config.get('CurrentBounds', o)
         return bounds
 
     def optStatus(self):
@@ -110,7 +110,7 @@ class AlarmRaiser(object):
     		0 if no errors
     		out_of_range(list): list of tuples with (location, current) if they are out of bounds
     	"""
-    	
+    	##todo, fix this needs current for loc not for a and b split!!
     	out_of_range = [] #array to hold out of range failures
     	for key in self.bounds:
     		d = self.data[key]

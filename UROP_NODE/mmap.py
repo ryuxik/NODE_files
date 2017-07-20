@@ -8,6 +8,15 @@ import fl
 import time
 import ConfigParser
 
+KEY_TO_LOC = {
+				'PPM': 0, 'CTR': 1, 'ACC': 2, 'RCC': 3, 'LAC': 4, 'LRC': 5, 'FRC': 14, 'VER': 15,
+				'PO1': 16, 'PO2': 17, 'PO3': 18, 'PO4': 19, 'HE1': 20, 'HE2': 21, 'CAL': 22, 'LTSa': 23,
+				'LTSb': 24, 'LGA': 25, 'LCCa': 26, 'LCCb': 27, 'THRa': 28, 'THRb': 29, 'THRc': 30, 'PDI': 31,
+				'FSMa': 32, 'FSMb': 33, 'FSMc': 34, 'ETX': 35, 'ERX': 36, 'SEC': 37, 'SCE': 37, 'SIE': 39,
+				'SFL': 40, 'SST': 41, 'CC1a': 96, 'CC1b': 97, 'CC2a': 98, 'CC2b': 99, 'CC3a': 100, 'CC3b': 101,
+				'CC4a': 102, 'CC4b': 103, 'TE1a': 104, 'TE1b': 105, 'TE2a': 106, 'TE2b': 107, 'TE3a': 108, 'TE3b': 109,
+				'TE4a': 110, 'TE4b': 111, 'TE5a': 112, 'TE5b': 112, 'TE6a': 114, 'TE6b': 115, 'LTMa': 116, 'LTMb': 117}
+
 class Tester(object):
 	"""
 	Tester class to send and read from FPGA registers following the memmory map
@@ -153,15 +162,26 @@ class Tester(object):
 		return expected == fl.flReadChannel(self.handle, channel)
 
 	def read(self, channel):
+		"""
+		Reads binary data from FPGA at channel
+
+		Args:
+			channel(int): channel to be read
+		"""
 		return fl.flReadChannel(self.handle, channel)
 
 	def readAll(self):
+		"""
+		Reads all locations on memmory map and stores results.
+
+		Returns:
+			key_to_data(dict): Maps mem map location name to data read from that location
+		"""
 		key_to_data = {}
 		for key in self.addresses:
 			for value in self.addresses[key]:
 				key_to_data[key] = self.read(value[0])
 		return key_to_data
-
 
 	def test_write(self, channel, data):
 		"""
