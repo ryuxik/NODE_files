@@ -139,6 +139,7 @@ def errorHandle(diagnostics):
 		for loc in diagnostics[0]: #power each device off and on
 			configControl.powerOff(handle, loc)
 			configControl.powerOn(handle, loc)
+		configControl.closeComm(handle)
 
 	if diagnostics[1] != 0: #connection to the FPGA may have been lost
 		isAwake = False
@@ -146,7 +147,7 @@ def errorHandle(diagnostics):
 			attempt = configControl.openComm()
 			if attempt != None:
 				isAwake = True
-				configControl.closeComm()
+				configControl.closeComm(attempt[1])
 		main()
 
 	if diagnostics[2][0]: #checks if optimization is needed, may need more conditions to actually run optimization.

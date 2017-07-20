@@ -15,13 +15,11 @@ class Optimizer(object):
         self.handle = handle
         self.fpga = fpga
 
-        ##can update to use ConfigParser and the args.ini file!! Also need to update args.ini file with correct info( vidpids)
         c = ConfigParser()
         c.read('args.ini')
         i = c.get('ConnectionInfo', 'fpga_old_vid_pid')
         p = c.get('ConnectionInfo', 'fpga_new_vid_pid')
-        self.mem_map = Tester(i, p)
-        #self.mem_map = Tester(argList_i, argList_p) 
+        self.mem_map = Tester(i, p) 
 
         #Initiate TEC seed laser operating point parameters
         self.temp = 0
