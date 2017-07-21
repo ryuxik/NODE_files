@@ -47,6 +47,7 @@ def alarms(old_counter, data):
 	Returns: 
 		diagnostics(list): 
 	"""
+
 	diagnostics = errorDetect.AlarmRaiser(old_counter, data)
 	return diagnostics
 
@@ -133,6 +134,7 @@ def errorHandle(diagnostics):
 	Args:
 		diagnostics(list): list containing error reports
 	"""
+	
 	if diagnostics[0] != 0: #a device is taking too much current #list should be locations, PO1 PO2 PO3 PO4
 		#switch off any device drawing too much power
 		fpga, handle, opt = configControl.openComm()
@@ -155,6 +157,13 @@ def errorHandle(diagnostics):
 
 #This main loop may be modified depending on the satellite's mode
 def main(old_counter=0):
+	"""
+	Main control loop for NODE, this may be modified depending on the satellite's mode in the future.
+
+	Args:
+		old_counter(int): last clock cycle count read from FPGA
+	"""
+	
 	planetLabBus = False
 	while(True): #main control loop
 		data = readTelemetry() #Read relevant data on RPi and Devices

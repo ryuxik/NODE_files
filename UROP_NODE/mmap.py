@@ -112,6 +112,7 @@ class Tester(object):
 		Returns:
 			(handle): id representing fpga board
 		"""
+
 		fl.flInitialise(0)
 		fl.flLoadStandardFirmware(old_vid_pid, new_vid_pid)
 		time.sleep(3) #this should be fl.flAwaitDevice(), but according to past contributor, it didn't work
@@ -127,6 +128,7 @@ class Tester(object):
 		Returns:
 			(int): address of name
 		"""
+
 		return self.addresses[name][0]
 
 	def getType(self, name):
@@ -138,6 +140,7 @@ class Tester(object):
 		Returns:
 			(string): type of address
 		"""
+
 		return self.addresses[name][1]
 
 	def end(self):
@@ -147,6 +150,7 @@ class Tester(object):
 		Args:
 			fpga(NodeFPGA): object representing fpga board
 		"""
+
 		fl.flClose(self.handle) 
 
 	def test_read(self, channel, expected):
@@ -159,6 +163,7 @@ class Tester(object):
 		Returns:
 			(boolean): True if expected matches what is read, else false
 		"""
+
 		return expected == fl.flReadChannel(self.handle, channel)
 
 	def read(self, channel):
@@ -168,6 +173,7 @@ class Tester(object):
 		Args:
 			channel(int): channel to be read
 		"""
+
 		return fl.flReadChannel(self.handle, channel)
 
 	def readAll(self):
@@ -177,6 +183,7 @@ class Tester(object):
 		Returns:
 			key_to_data(dict): Maps mem map location name to data read from that location
 		"""
+
 		key_to_data = {}
 		for key in self.addresses:
 			for value in self.addresses[key]:
@@ -193,6 +200,7 @@ class Tester(object):
 		Returns:
 			(boolean): result from test_read
 		"""
+
 		fl.flWriteChannel(self.handle,channel, data)
 		#not sure how to format data yet to test a read to loc that was written to
 		#but the idea should be similar to this
@@ -207,6 +215,7 @@ class Tester(object):
 		Returns:
 			res(list): list containig reports of passed and failed tests
 		"""
+		
 		res = []
 		ro = [(key, val[0]) for key in self.addresses for val in self.addresses[key] if val[1] == 'ro'] #creates tuples of read only locs with addr, (;NAME', addr)
 		rw = [(key, val[0]) for key in self.addresses for val in self.addresses[key] if val[1] == 'rw'] #creates tuples of read/write locs with addr, ('NAME', addr)

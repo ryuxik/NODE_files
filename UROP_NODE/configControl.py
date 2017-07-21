@@ -263,12 +263,37 @@ def openComm():
             return None #open comm failed
 
 def closeComm(handle):
+    """
+    Closes communication to FPGA board given a handle
+
+    Args:
+        handle: An opaque reference to an internal structure representing the connection.
+    """
+
     fl.flClose(handle)
 
 def powerOn(handle, channelName):
+    """
+    Sends on binary signal to a FPGA through specified channel to power on device at that location. 
+    Assumes that communication has been opened. 
+
+    Args: 
+        handle: An opaque reference to an internal structure representing the connection.
+        channelName(string): Name of location to power on
+    """
+
     fl.flWriteChannel(handle, mmap.KEY_TO_LOC[channelName], 0x55)
 
 def powerOff(handle, channelName):
+    """
+    Sends binary signal to a FPGA through specified channel to power off device at that location.
+    Assumes communication has been opened.
+
+    Args: 
+        handle: An opaque reference to an internal structure representing the connection.
+        channelName(string): Name of location to power off
+    """
+
     fl.flWriteChannel(handle, mmap.KEY_TO_LOC[channelName], 0x0F)
 
 #main function of the old SPI_test
