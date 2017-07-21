@@ -15,7 +15,7 @@ class Optimizer(object):
         self.handle = handle
         self.fpga = fpga
 
-        c = ConfigParser()
+        c = ConfigParser.RawConfigParser()
         c.read('args.ini')
         i = c.get('ConnectionInfo', 'fpga_old_vid_pid')
         p = c.get('ConnectionInfo', 'fpga_new_vid_pid')
@@ -28,6 +28,7 @@ class Optimizer(object):
         #Track adjustments made to previous setpoint and present setpoint
         self.delta_T = 0
         self.delta_C = 0
+    
     """ get functions (check present TEC seed laser operating point) """
 
     def getTemp(self):

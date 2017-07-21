@@ -41,7 +41,7 @@ class AlarmRaiser(object):
             (Tester, bounds(dict)): object necessary for other functions and dict with current bounds for each device to be checked
         """
         ##FIX
-        Config = ConfigParser.ConfigParser()
+        Config = ConfigParser.RawConfigParser()
         Config.read('args.ini')
         bounds = {} #this dictionary holds the locations to be tested along with their respective bounds for acceptable currents
         opts = Config.options('CurrentBounds')

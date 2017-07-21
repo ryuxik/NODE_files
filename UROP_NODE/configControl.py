@@ -61,7 +61,7 @@ def readFile(fileName):
                 break
 
 
-def get_args():
+def getArgs():
     """
     Gets neccessary args to communicate and program FPGA board.
 
@@ -69,13 +69,13 @@ def get_args():
         argList(dictionary): dict of necessary args for functions
     """
     argList = {}
-    Config = ConfigParser()
+    Config = ConfigParser.RawConfigParser()
     Config.read('args.ini')
     argList['fpga_vid_pid'] = Config.get('ConnectionInfo', 'fpga_new_vid_pid')
     argList['fpga_vid_pid_did'] = Config.get('ConnectionInfo', 'fpga_vid_pid_did')
     argList['jtag_chain_port_config'] = Config.get('ConnectionInfo', 'jtag_chain_port_config')
     argList['progConfig'] = Config.get('ConfigurationFiles', 'progConfig')
-    argList['dataToWrite'] = Config.get('ConnectionInfo', 'data_to_write') #not sure what type of binary data this would be or if it should be in the args.ini file
+    argList['dataToWrite'] = Config.get('ConnectionInfo', 'dataToWrite') #not sure what type of binary data this would be or if it should be in the args.ini file
     argList['write_times'] = Config.get('ConnectionInfo', 'write_times') #not sure where this should come from, probably depends on the data to write
     argList['ppmOrder'] = Config.get('ConnectionInfo', 'ppm_order')
     argList['dac_setting'] = Config.get('ConnectionInfo', 'dac_setting')
@@ -127,7 +127,7 @@ def ids(vp, argList):
     print("Attempting to open connection to FPGALink device {} again...".format(vp))
     return fl.flOpen(vp)
     
-def conduit_selection(handle, conduit=1):
+def conduitSelection(handle, conduit=1):
     """
     Selects conduit and checks if the FPGA board is nero capable and capable of communication.
 
@@ -142,7 +142,7 @@ def conduit_selection(handle, conduit=1):
     fl.flSelectConduit(handle, conduit)
     return (isNeroCapable, isCommCapable)
 
-def jtag_chain(isNeroCapable, argList, vp, handle):
+def jtagChain(isNeroCapable, argList, vp, handle):
     """
     Tests the JTAG chain.
 
@@ -182,7 +182,7 @@ def configure(argList, isNeroCapable, handle, vp):
         raise fl.FLException("Device program requested but device at {} does not support NeroProg".format(vp))
 
 
-def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, M, num_bytes):
+def dataToWrite(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, M, num_bytes):
     """
     Writes binary data to FPGA board.
 
@@ -209,7 +209,7 @@ def data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writ
         fpga.writeFile(writechannel,resetchannel,statuschannel,data_packets,writedelay,vp)
         fpga.setTrackingMode(writechannel,trackingbyte,M) # quick hack, but should be doing tracking mode after a frame already
 
-def update_SPI(handle, channels, byte_array):
+def updateSPI(handle, channels, byte_array):
     """
     Updates SPI
 
@@ -223,7 +223,7 @@ def update_SPI(handle, channels, byte_array):
     fl.flWriteChannel(handle, MSB_channel, byte_array[0])
     fl.flWriteChannel(handle, LSB_channel, byte_array[1])
 
-def read_SPI(handle, channels):
+def readSPI(handle, channels):
     """
     Reads the SPI
 
@@ -241,7 +241,7 @@ def read_SPI(handle, channels):
     return [rxm, rxl]
 
 def openComm():
-    argList = get_args()
+    argList = getArgs()
     handle = fl.FLHandle()
     try:
         fpga_vid_pid_did = argList['fpga_vid_pid_did']
@@ -299,7 +299,7 @@ def powerOff(handle, channelName):
 #main function of the old SPI_test
 #need to fix so this uses Optimizer object and mem map properly
 def SPImain():
-	argList = get_args()
+	argList = getArgs()
 	handle = fl.FLHandle()
 	try:
 	    fl.flInitialise(0)
@@ -351,9 +351,9 @@ def SPImain():
 	        code = curr/(4.096*1.1*((1/6.81)+(1/16500)))*4096
 	        first_byte, second_byte = opt.code2bytes(code)
 	        spi_data = [first_byte, second_byte]
-	        update_SPI(handle, [mem_map.getAddress('LCCa'), mem_map.getAddress('LCCb')], spi_data)
+	        updateSPI(handle, [mem_map.getAddress('LCCa'), mem_map.getAddress('LCCb')], spi_data)
 	        #Test reading LD Bias (channels 64 and 65)
-	        rx_bias = read_SPI(handle, [mem_map.getAddress('CC3a'), mem_map.getAddress('CC3b')])
+	        rx_bias = readSPI(handle, [mem_map.getAddress('CC3a'), mem_map.getAddress('CC3b')])
 	        for r in rx_bias:
 	            print ("Bias bytes read: ", r)
 	        print (rx_bias[1]*256 + rx_bias[0])/4096 * (4.096*1.1*((1/6.81)+(1/16500)))
@@ -370,10 +370,10 @@ def SPImain():
 	        V_set = Vcc/(((m.exp(B/T)*(R_0 * m.exp(-B/T_0)))/R_known)+1)
 	        V_code = opt.voltage2code(V_set) #convert voltage to code
 	        fb, sb = opt.code2byte(V_code) #convert code to bytes
-	        update_SPI(handle, [mem_map.getAddress('LTSa'),mem_map.getAddress('LTSb')], [fb, sb])
+	        updateSPI(handle, [mem_map.getAddress('LTSa'),mem_map.getAddress('LTSb')], [fb, sb])
 
 	        #reading temp
-	        bytes__meas = read_SPI(handle, [mem_map.getAddress('LTMa'),mem_map.getAddress('LTMb')]) #read ADC value
+	        bytes__meas = readSPI(handle, [mem_map.getAddress('LTMa'),mem_map.getAddress('LTMb')]) #read ADC value
 	        code_meas = bytes_meas[1]*256 + bytes_meas[0] #convert bytes to double
 			V_meas = opt.code2voltage(code_meas) #convert ADC to voltage
 
@@ -385,7 +385,7 @@ def SPImain():
 	        A = 3.81e-3 #from datasheet
 	        B = -6.02e-7 #from datasheet
 	        R_t0 = 1000
-	        T_bm = read_SPI(handle, [mem_map.getAddress('TE1a'),mem_map.getAddress('TE1b')]) #temp code measured
+	        T_bm = readSPI(handle, [mem_map.getAddress('TE1a'),mem_map.getAddress('TE1b')]) #temp code measured
 			T_cm = 256*T_bm[1] + T_bm[0] #convert bytes to double
 	        T_meas = opt.code2voltage(T_cm) #convert ADC to voltage
 	        R_T = R_known * (Vcc/T_meas - 1)
@@ -400,7 +400,7 @@ def SPImain():
 
 #main fucnition of the old nodectr_oven_test
 def NODECTRLmain():
-    argList = get_args()
+    argList = getArgs()
     handle = fl.FLHandle()
     try:
         fl.flInitialise(0)
@@ -411,9 +411,9 @@ def NODECTRLmain():
         except fl.FLException as ex:
             handle = ids(vp, argList)
       
-        isNeroCapable, isCommCapable = conduit_selection(1)
+        isNeroCapable, isCommCapable = conduitSelection(1)
         
-        jtag_chain(isNeroCapable, argList, vp, handle)
+        jtagChain(isNeroCapable, argList, vp, handle)
         
         configure(argList, isNeroCapable, handle, vp)
         
@@ -471,7 +471,7 @@ def NODECTRLmain():
                 print (" ones   = 0x%-12X target=0x%-12X"%(ones,cycles/M))
                 print (" SlotER = %e"%(ser))
 
-            data_to_write(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, M, num_bytes)
+            dataToWrite(argList, fpga, writechannel, resetchannel, statuschannel, writedelay, vp, M, num_bytes)
             #alg testing goes here, but alg is not up to date!!
             #opt_alg(argList, fpga)
             

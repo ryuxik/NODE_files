@@ -13,29 +13,71 @@ def interrupt():
 	Reads data incoming through PL Bus and updates necessary values according to data.
 
 	"""
-	config = ConfigParser.read('args.ini')
+
+	config = ConfigParser.RawConfigParser()
+	config.read('args.ini')
 	connection = busComm.Connection(
 									config.get('ConnectionInfo', 'plBus_vid'), config.get('ConnectionInfo', 'plBus_pid'),
 									config.get('ConnectionInfo', 'plBus_packet_size'), config.get('ConnectionInfo', 'plBus_timeout'),
 									config.get('ConnectionInfo', 'plBus_wendpoint'), config.get('ConnectionInfo', 'plBus_rendpoint'))
 
-	dataFromBus = connection.updateReceived()
+	data_from_bus = connection.updateReceived()
 	valid = False
 	##need to check if data is valid command, then set valid to true
 
+	#need to change the format of data_from_bus
 	if valid:
-		setValues(dataFromBus) #Set values according to data received
-		
-def setValues(dataFromBus):
+		setValues(data_from_bus) #Set values according to data received
+
+def prepDict(data_from_bus):
 	"""
-	Parse data from PL and do things with data
+	Create dictionary of dicts, each dict represents a section of the args.ini file.
 
 	Args:
-		dataFromBus(): data received from PL
+		data_from_bus: data received from PL, 
+			assuming data is in the form of a dict 
+			with key being a section and list of (option, value) being write values to that key in the args.ini file
 	"""
 
-	##need information about the format of the data!!
-	pass
+	#read file
+	c = ConfigParser.RawConfigParser()
+	c.read('args.ini')
+
+	#creates master dict representation of args.ini file
+	master = {}
+	for section in c.sections():
+		temp = {}
+		for option in c.options(section):
+			temp[option] = c.get(section, option)
+		master[section] = temp
+
+	#updates master dict representation of args.ini file
+	for key in data_from_bus:
+		for tup in data_from_bus[key]:
+			master[key][tup[0]] = tup[1]
+
+	return master
+
+def setValues(data_from_bus):
+	"""
+	Update Values on args.ini file with data received from PL
+
+	Args:
+		data_from_bus(): data received from PL, 
+			assuming data is in the form of a dict 
+			with key being a section and list of (option, value) being write values to that key in the args.ini file
+	"""
+	
+	prep = prepDict(data_from_bus) #parses existing data in args.ini and uses it to make updated dictionary repr
+	c = ConfigParser.RawConfigParser()
+
+	for section in prep: #writes the new args.ini file
+		c.add_section(section)
+		for option in prep[section]:
+			c.set(section, option, prep[section][option])
+
+	with open('args.ini', 'wb') as configfile: #writes out
+		c.write(configfile)  
 
 def alarms(old_counter, data):
 	"""
@@ -96,7 +138,9 @@ def sendData():
 	"""
 	Sends data to PL
 	"""
-	config = ConfigParser.read('args.ini')
+
+	config = ConfigParser.RawConfigParser()
+	config.read('args.ini')
 	connection = busComm.Connection(
 									config.get('ConnectionInfo', 'plBus_vid'), config.get('ConnectionInfo', 'plBus_pid'),
 									config.get('ConnectionInfo', 'plBus_packet_size'), config.get('ConnectionInfo', 'plBus_timeout'),
@@ -116,12 +160,12 @@ def optimize(ser):
 	try: #need to open connection
 		fpga, handle, opt = configControl.openComm() #opens connection and returns fpga, handle, and optimizer objects
 		#make call to optimize here in whichever mode is most appropriate depending on efficiency
-		condition = None #implement condition for just scan or dither mode not sure which
+		condition = None ##implement condition for just scan or dither mode not sure which
 		if condition:
-			obslength = None #Don't know what this is yet
-			opt.dither_mode(obslength)
+			obs_length = None #Don't know what this is yet
+			opt.dither_mode(obs_length)
 		else:
-			opt.scan_mode(obslength)
+			opt.scan_mode(obs_length)
 		
 		configControl.closeComm(handle) #closes communication to fpga
 	except: #connection open failed :(
@@ -144,11 +188,11 @@ def errorHandle(diagnostics):
 		configControl.closeComm(handle)
 
 	if diagnostics[1] != 0: #connection to the FPGA may have been lost
-		isAwake = False
-		while not isAwake: #atttempt to reconnect until FPGA responds
+		is_awake = False
+		while not is_awake: #atttempt to reconnect until FPGA responds
 			attempt = configControl.openComm()
 			if attempt != None:
-				isAwake = True
+				is_awake = True
 				configControl.closeComm(attempt[1])
 		main()
 
@@ -163,17 +207,19 @@ def main(old_counter=0):
 	Args:
 		old_counter(int): last clock cycle count read from FPGA
 	"""
-	
-	planetLabBus = False
 	while(True): #main control loop
 		data = readTelemetry() #Read relevant data on RPi and Devices
 		diagnostics = alarms(old_counter, data) #Check if system is in working conditions according to reading status fla
 		old_counter = data['FRC'] #Set old counter to # clock cycles last read
 		updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
 		errorHandle(diagnostics) #Handle errors  
-		
-		if(commEnabled): #Is the sat in communication mode with connected devices
-		##make logic for determining commEnabled!, may be set by data read from PL	
+
+		#Find if NODE sat is communications enabled
+		c = ConfigParser.RawConfigParser()
+		c.read('args.ini')
+		comm_enabled = c.getboolean('ModeSettings', 'comm_enabled')
+
+		if(comm_enabled): #Is the sat in communication mode with connected devices	
 			processCamData() #Take data from camera centering and process in RPI
 			updateFSM() #Update FSM according to data that was processed
 			##The two proccesses above might be a single one, ask for clarification

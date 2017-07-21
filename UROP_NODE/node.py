@@ -22,9 +22,9 @@ class NodeFPGA(object):
         self.DAC_CMD_WRITE_AND_UPDATE = 0x30
         self.DAC_CMD_SEL_INTERNAL_REF = 0x60
 
-        self.FPGA_init()
+        self.FPGAinit()
 
-    def FPGA_init(self):
+    def FPGAinit(self):
         # SPI CS default to high
         fl.flWriteChannel(self.handle,self.FIFO_GPIO_WR,bytearray([0xFF]))
         time.sleep(0.1)

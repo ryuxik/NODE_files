@@ -14,7 +14,7 @@ import ConfigParser
 
 if __name__ == "__main__":
 	testsPassed = False
-	Config = ConfigParser.ConfigParser()
+	Config = ConfigParser.RawConfigParser()
     Config.read('args.ini')
     configurations = {} #this dictionary holds the configuration files
     commInfo = {} #this dictionary holds the info necessary for communication with devices
