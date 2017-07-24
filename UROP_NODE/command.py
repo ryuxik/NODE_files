@@ -23,8 +23,19 @@ def interrupt():
 
 	data_from_bus = connection.updateReceived()
 	valid = False
-	##need to check if data is valid command, then set valid to true
+	for option in config.options('ModeSettings'):
+		b = config.getboolean('ModeSettings',option)
+		if b:
+			mode = b
+			break
 
+	##need to check if data is valid command, then set valid to true
+	c = ConfigParser.RawConfigParser()
+	c.read('commandChecker.ini')
+	##implement something here to pull command from data_from_bus
+	#command = process(data_from_bus)
+	if command in c.options(mode):
+		valid = True
 	#need to change the format of data_from_bus
 	if valid:
 		setValues(data_from_bus) #Set values according to data received
@@ -224,7 +235,7 @@ def main(old_counter=0):
 			updateFSM() #Update FSM according to data that was processed
 			##The two proccesses above might be a single one, ask for clarification
 			updateOthers() #Update other devices connected to FPGA or rpi
-			sendData() #Send data to PL if this is needed
+			sendData() #Send data to PL if this is needed, dont know how this would work if we are configured as a slave
 
 		#if there is information incoming from PL
 		## might need to implement this in a different way depending on the latency, ex. break while loop and handle immediately if necessary
