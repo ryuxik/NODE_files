@@ -13,14 +13,15 @@ class NodeFPGA(object):
         self.handle = handle
 
         # Chip-specific defaults
-        self.FIFO_ASYNC_WR = 0x01
-        self.FIFO_SPI_WR   = 0x03
-        self.FIFO_GPIO_WR  = 0x04
-        self.FIFO_ASYNC_RD = 0x01
+        ## Update these chip specific defaults, these hex values don't match up to anyting in mem map
+        self.FIFO_ASYNC_WR = 0x01 # I think this is fine, since this would read and write to the control channel
+        self.FIFO_SPI_WR   = 0x03 # This is apparently writing to the rejected commands channel, may be intended for channel 1
+        self.FIFO_GPIO_WR  = 0x04 # This is writing to the last accepted commands channel
+        self.FIFO_ASYNC_RD = 0x01 # I think this is fine
 
         # DAC commands
-        self.DAC_CMD_WRITE_AND_UPDATE = 0x30
-        self.DAC_CMD_SEL_INTERNAL_REF = 0x60
+        self.DAC_CMD_WRITE_AND_UPDATE = 0x30 # currently writing to tx power level config
+        self.DAC_CMD_SEL_INTERNAL_REF = 0x60 #writing to unused channel
 
         self.FPGAinit()
 
