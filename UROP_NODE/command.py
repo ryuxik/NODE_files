@@ -98,7 +98,10 @@ def alarms(old_counter, data):
 		old_counter(int): clock cycle count read last loop
 		data(dict): memmory map location name to data read
 	Returns: 
-		diagnostics(list): 
+		diagnostics(list): report of various possble error sources. 
+					[currents_result is 0 if no errors else list of tuples with failues,
+                    clock_cycles_since_reset is 0 if no error, int with other number if else,
+                    oStatus is tbd]
 	"""
 
 	diagnostics = errorDetect.AlarmRaiser(old_counter, data)
@@ -106,10 +109,10 @@ def alarms(old_counter, data):
 
 def readTelemetry():
 	"""
-	Reads all addresses from memmory map and stores data in dictionary
+	Reads all addresses from memory map and stores data in dictionary
 
 	Returns:
-		data(dict): memmory map location name to data read
+		data(dict): memory map location name to data read
 	"""
 
 	t = mmap.Tester()
@@ -184,7 +187,7 @@ def optimize(ser):
 		
 def errorHandle(diagnostics):
 	"""
-	Corrects errors detected by diagnostics report from alarms(). Inlcudes call to optimization if necessary.
+	Corrects errors detected by diagnostics report from alarms(). Includes call to optimization if necessary.
 
 	Args:
 		diagnostics(list): list containing error reports
