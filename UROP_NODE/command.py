@@ -170,13 +170,9 @@ def optimize(ser):
 	
 	try: #need to open connection
 		fpga, handle, opt = configControl.openComm() #opens connection and returns fpga, handle, and optimizer objects
-		#make call to optimize here in whichever mode is most appropriate depending on efficiency
-		condition = None ##implement condition for just scan or dither mode not sure which
-		if condition:
-			obs_length = None #Don't know what this is yet
-			opt.dither_mode(obs_length)
-		else:
-			opt.scan_mode(obs_length)
+		#make call to optimize here 
+		obs_length = 1 #constant that will be decided in the future, 1 might work fine
+		opt.scan_mode(obs_length) #may need to still add condition to this function, but don't need two separate functions
 		
 		configControl.closeComm(handle) #closes communication to fpga
 	except: #connection open failed :(
