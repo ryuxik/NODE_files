@@ -181,19 +181,26 @@ def configure(argList, isNeroCapable, handle, vp):
 def opt_alg(argList, fpga):
     if argList.ser:
         f = open('ppm128_ser_dither.csv', 'w')
+        MAX_RETRIES = 10  #prevents the optimizer from repeating infinitely
         obslength = float(argList.ser)
+
+        #set DAC based on PPM order
+
+        ###remove these lines
         gpib_port = "/dev/ttyUSB0"
         controller = LaserController(gpib_port,20)
         print ('Laser output Mode: ' + str(controller.getLaserOutput()))
         print ('TEC output Mode: ' + str(controller.getTECOutput()))
-                 
+        
         #enable output modes
         controller.setLaserOutput(1);
         time.sleep(5)
         controller.setTECOutput(1);
         time.sleep(5)
+        ###
 
-        mode = 1 #0 for scan, 1 for dither
+        mode = 0 #0 for scan, 1 for dither
+        retries = 0  #counter to keep track of loops
 
         if (mode == 0):
             #scan mode
