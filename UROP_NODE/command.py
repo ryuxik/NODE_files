@@ -148,21 +148,6 @@ def updateFSM():
 def updateOthers():
 	pass
 
-def sendData():
-	"""
-	Sends data to PL
-	"""
-
-	config = ConfigParser.RawConfigParser()
-	config.read('args.ini')
-	connection = busComm.Connection(
-									config.get('ConnectionInfo', 'plBus_vid'), config.get('ConnectionInfo', 'plBus_pid'),
-									config.get('ConnectionInfo', 'plBus_packet_size'), config.get('ConnectionInfo', 'plBus_timeout'),
-									config.get('ConnectionInfo', 'plBus_wendpoint'), config.get('ConnectionInfo', 'plBus_rendpoint'))
-	data = None ##figure out what data to send here!! will probably depend on what is sent by PL
-	connection.updateData(data) #updates data held by object and sends it to PL Bus, might not actually need this!
-	##figure out how to actually send data!! try using code from node or control
-
 def optimize(ser):
 	"""
 	Optimizes current and temperature for power efficiency.
@@ -234,8 +219,7 @@ def main(old_counter=0):
 			updateFSM() #Update FSM according to data that was processed
 			##The two proccesses above might be a single one, ask for clarification
 			updateOthers() #Update other devices connected to FPGA or rpi
-			sendData() #Send data to PL if this is needed, dont know how this would work if we are configured as a slave
-
+			
 		#if there is information incoming from PL
 		## might need to implement this in a different way depending on the latency, ex. break while loop and handle immediately if necessary
 		interrupt() #Read incoming data and then return to while loop
