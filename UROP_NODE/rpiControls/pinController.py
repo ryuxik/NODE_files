@@ -90,7 +90,7 @@ def makeBusSlave():
 		setPinLow('29')
 	GPIO.cleanup() #unsure about this line
 
-def make_bus_master():
+def makeBusMaster():
 	"""
 	Makes the pl bus a master (connected to rpi thru usb 2.0) 
 	"""
