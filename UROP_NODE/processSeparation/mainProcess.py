@@ -165,7 +165,7 @@ def errorHandle(diagnostics):
 
 #This main loop may be modified depending on the satellite mode
 ##implement threading here later
-def main(old_counter=0):
+def controlLoop(old_counter=0):
 	"""
 	Main control loop for NODE, this may be modified depending on the satellite's mode in the future.
 
@@ -186,6 +186,3 @@ def main(old_counter=0):
 	#if there is information incoming from PL
 	## might need to implement this in a different way depending on the latency, ex. break while loop and handle immediately if necessary
 	interrupt() #Read incoming data and then return to while loop
-
-if __name__ == '__main__':
-	main()

@@ -258,7 +258,8 @@ def openComm():
         isCommCapable = fl.flIsCommCapable(handle, 1)
         fl.flSelectConduit(handle, 1)
         if isCommCapable and fl.flIsFPGARunning(handle):
-            return (NodeFPGA(handle), handle, Optimizer(handle, fpga))
+            fpga = NodeFPGA(handle)
+            return (fpga, handle, Optimizer(handle, fpga))
         else:
             return None #open comm failed
 

@@ -150,7 +150,7 @@ class Optimizer(object):
     # Scan mode can either assume no known operating setpoint or start at the current operating point
     # and outputs an operating point using hill-climbing search for temp and bias_current
     # #this is where we might need reset condition
-    def scan_mode(self, fpga, obslength):
+    def scan_mode(self):
         #Constants
         obslength = 1 #constant for waiting after resetting counters when measuring SER
         MAX_RETRIES = 10 #max number of times algorithm should switch from inc to dec
@@ -178,7 +178,7 @@ class Optimizer(object):
         current = self.getLaserCurrent()
         print("New temperature: %f, new current: %f"%(temp, current))
         print("Measuring slot error rate...")
-        cycles,errors,ones,ser = fpga.measureSER(obslength=obslength)
+        cycles,errors,ones,ser = self.fpga.measureSER(obslength=obslength)
         print(" cycles = 0x%-12X"%(cycles))
         print(" errors = 0x%-12X"%(errors))
         print(" ones   = 0x%-12X target=0x%-12X"%(ones,cycles/M))
@@ -203,7 +203,7 @@ class Optimizer(object):
 
             self.setLaserTemp(ntemp)
             time.sleep(2)
-            ncycles, nerrors, nones, nser = fpga.measureSER(obslength=obslength)
+            ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
             print("New temperature: %f, nser: %e" %(ntemp, nser))
 
             if nser > tser:
@@ -227,7 +227,7 @@ class Optimizer(object):
                 ncurrent = ncurrent + zzz
             self.setLaserCurrent(ncurrent)
             time.sleep(2)
-            ncycles, nerrors, nones, nser = fpga.measureSER(obslength=obslength)
+            ncycles, nerrors, nones, nser = self.fpga.measureSER(obslength=obslength)
             print("New current: %f, nser: %e" %(ncurrent,nser))
 
             if nser > cser:
