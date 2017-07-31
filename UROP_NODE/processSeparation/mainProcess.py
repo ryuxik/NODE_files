@@ -7,6 +7,7 @@ import busComm
 import ConfigParser
 import optimizer
 import configControl
+from usbSwitch import switch
 
 def interrupt():
 	"""
@@ -33,9 +34,13 @@ def interrupt():
 	c.read('commandChecker.ini')
 	##implement something here to pull command from data_from_bus
 	#command = process(data_from_bus)
+	command = 'foo'
 	if command in c.options(mode):
 		valid = True
 	#need to change the format of data_from_bus
+	##implement switch here
+	#if command is switch
+	#switch()
 	if valid:
 		setValues(data_from_bus) #Set values according to data received
 
@@ -103,7 +108,7 @@ def alarms(old_counter, data):
                     oStatus is tbd]
 	"""
 
-	diagnostics = errorDetect.AlarmRaiser(old_counter, data)
+	diagnostics = errorDetect.AlarmRaiser(data)
 	return diagnostics
 
 def readTelemetry():
@@ -138,7 +143,7 @@ def updateTelemetry(data, diagnostics):
 
 	f.close()
 		
-def errorHandle(diagnostics):
+def errorHandle(diagnostics,lock):
 	"""
 	Corrects errors detected by diagnostics report from alarms(). Includes call to optimization if necessary.
 
@@ -154,35 +159,46 @@ def errorHandle(diagnostics):
 			configControl.powerOn(handle, loc)
 		configControl.closeComm(handle)
 
-	if diagnostics[1] != 0: #connection to the FPGA may have been lost
-		is_awake = False
-		while not is_awake: #atttempt to reconnect until FPGA responds
-			attempt = configControl.openComm()
-			if attempt != None:
-				is_awake = True
-				configControl.closeComm(attempt[1])
-	main()
+	# if diagnostics[1] != 0: #connection to the FPGA may have been lost
+	# 	is_awake = False
+	# 	while not is_awake: #atttempt to reconnect until FPGA responds
+	# 		attempt = configControl.openComm()
+	# 		if attempt != None:
+	# 			is_awake = True
+	# 			configControl.closeComm(attempt[1])
+
+	# if diagnostics[2][0]: #checks if optimization is needed, may need more conditions to actually run optimization.
+	# 	#unsure if this will make the optimization process run, needs testing
+	# 	#may need to use IPC instead, queue or pipe?
+	# 	lock.release()
+	# 	lock.acquire()
+
+	if diagnostics[1][0]: #checks if optimization is needed, may need more conditions to actually run optimization.
+		#unsure if this will make the optimization process run, needs testing
+		#may need to use IPC instead, queue or pipe?
+		lock.release()
+		lock.acquire()
 
 #This main loop may be modified depending on the satellite mode
 ##implement threading here later
-def controlLoop(old_counter=0):
+def controlLoop(lock, event):
 	"""
 	Main control loop for NODE, this may be modified depending on the satellite's mode in the future.
 
 	Args:
 		old_counter(int): last clock cycle count read from FPGA
 	"""
-	data = readTelemetry() #Read relevant data on RPi and Devices
-	diagnostics = alarms(old_counter, data) #Check if system is in working conditions according to reading status fla
-	old_counter = data['FRC'] #Set old counter to # clock cycles last read
-	updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
-	errorHandle(diagnostics) #Handle errors  
+	while True:
+		lock.acquire()
+		old_counter = None
+		try:
+			data = readTelemetry() #Read relevant data on RPi and Devices
+			diagnostics = alarms(data) #Check if system is in working conditions according to reading status fla
+			updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
+			errorHandle(diagnostics, lock) #Handle errors
 
-	#Find if NODE sat is communications enabled
-	c = ConfigParser.RawConfigParser()
-	c.read('args.ini')
-	comm_enabled = c.getboolean('ModeSettings', 'comm_enabled')
-
-	#if there is information incoming from PL
-	## might need to implement this in a different way depending on the latency, ex. break while loop and handle immediately if necessary
-	interrupt() #Read incoming data and then return to while loop
+			#if there is information incoming from PL
+			## might need to implement this in a different way depending on the latency, ex. break while loop and handle immediately if necessary
+			interrupt() #Read incoming data and then return to while loop
+		finally:
+			lock.release()

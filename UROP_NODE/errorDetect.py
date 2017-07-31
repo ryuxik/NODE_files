@@ -11,9 +11,9 @@ class AlarmRaiser(object):
     This class holds the necessary methods to raise alarms during the alarms section of the control code.
     It checks for correct current consumption, correct clock cycle count, and if optimization is needed.
     """
-	def __init__(self, old_counter, data):
+	def __init__(self, data):
         self.bounds = self.setup()
-        self.old_counter = old_counter
+        #self.old_counter = old_counter
         self.data = data
 
     def __call__(self):
@@ -27,10 +27,11 @@ class AlarmRaiser(object):
         """
 
         currents_result = self.checkCurrents()
-        clock_cycles_result = self.clockCyclesSinceReset()
+        #clock_cycles_result = self.clockCyclesSinceReset()
         o_status = self.optStatus()
         self.end()
-        return [currents_result, clock_cycles_result, o_status]
+        #return [currents_result, clock_cycles_result, o_status]
+        return [currents_result, o_status]
 
     def setup(self):
         """
