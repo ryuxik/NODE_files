@@ -1,4 +1,4 @@
-
+import mmap.py
 """
 This is to test the currents of devices during the alarms section of the cotrol code.
 It reports errors when devices are not cosuming the current they should be consuming.
@@ -10,7 +10,7 @@ class AlarmRaiser(object):
     This class holds the necessary methods to raise alarms during the alarms section of the control code.
     It checks for correct current consumption, correct clock cycle count, and if optimization is needed.
     """
-	def __init__(self, data, old_counter, config):
+	def __init__(self, data, old_counter, config, m):
         self.bounds = self.setup(config)
         self.old_counter = old_counter
         self.data = data
@@ -70,7 +70,7 @@ class AlarmRaiser(object):
 
 		#### LOOK AT DATA SHEETS TO FIGURE OUT CONVERSIONS
 
-		if self.getAddress(name) == 'LCCa':
+		if m.getAddress(name) == 'LCCa':
 			return (code[0]*256 + code[1])/4096 * (4.096*1.1*((1/6.81)+(1/16500))) ##FIX ME
 		else:
         	return (code[0]*256 + code[1])/4096 * (4.096*1.1*((1/6.81)+(1/16500))) # formula for CC1-4
@@ -129,7 +129,7 @@ class AlarmRaiser(object):
 			out_of_range.append(('CC4', currents[3]))
 		if not self.bounds['LCC1'][0] < currents[4] < self.bounds['LCC1'][1]
 			out_of_range.append(('LCC1', currents[4]))
-			
+
 
         #return errors if they exist
         if len(out_of_range) > 0:
