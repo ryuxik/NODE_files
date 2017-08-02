@@ -1,5 +1,4 @@
 import ConfigParser
-
 """
 This is to test the currents of devices during the alarms section of the cotrol code.
 It reports errors when devices are not cosuming the current they should be consuming.
@@ -61,19 +60,24 @@ class AlarmRaiser(object):
         	return (True, ser)
         return False
 
-    def code2current(self, code):
+    def code2current(self, code, name):
     	"""
     	Takes data received from a channel and converts it to a current
 
     	Args:
     		code(tuple): data received from channel
+			name(string): name associated with data
     	Returns
     		current(double): current derived from code
     	"""
-    	##need to implement converter from data read to current
-    	##something like this
-        return (code[0]*256 + code[1])/4096 * (4.096*1.1*((1/6.81)+(1/16500))) #not sure if this works for all locs
-        #### LOOK AT DATA SHEETS TO FIGURE OUT CONVERSIONS
+    	#implement converter from data read to current
+
+		#### LOOK AT DATA SHEETS TO FIGURE OUT CONVERSIONS
+
+		if self.getAddress(name) == 'LCCa':
+			return (code[0]*256 + code[1])/4096 * (4.096*1.1*((1/6.81)+(1/16500))) ##FIX ME
+		else:
+        	return (code[0]*256 + code[1])/4096 * (4.096*1.1*((1/6.81)+(1/16500))) # formula for CC1-4
 
     def clockCyclesSinceReset(self):
         """
@@ -92,12 +96,12 @@ class AlarmRaiser(object):
     		#'Counter increased to: ', counter, 'delta: ', (counter- old_counter)
     		return 0
     	else:
-    		#'Counter decreased to: ', counter, 'delta: ', (counter-old_counter) 
+    		#'Counter decreased to: ', counter, 'delta: ', (counter-old_counter)
     		return 0
 
     def readSEM(self):
         """
-        
+
         """
     	flags = self.data['SFL']
     	status = self.data['SST']
@@ -111,28 +115,28 @@ class AlarmRaiser(object):
     		0 if no errors
     		out_of_range(list): list of tuples with (location, current) if they are out of bounds
     	"""
-        to_check = [('CC1a', 'CC1b'), ('CC2a', 'CC2b'), ('CC3a', 'CC3b'), ('CC4a', 'CC4b')]
+        to_check = [('CC1a', 'CC1b'), ('CC2a', 'CC2b'), ('CC3a', 'CC3b'), ('CC4a', 'CC4b'), ('LCCa', 'LCCb')]
         currents = []
     	out_of_range = [] #array to hold out of range failures
-    	
+
         #get currents at locations
         for pair in to_check:
-    		currents.append(self.code2current(self.data[pair[0]], self.data[pair[1]]))
-    	
-        #check if currents in bounds
-        if not self.bounds['LOC1'] < currents[0] < self.bounds['LOC1']:
-            out_of_range.append('LOC1', currents[0])
-        if if not self.bounds['LOC2'] < currents[1] < self.bounds['LOC2']:
-            out_of_range.append('LOC2', currents[1])
-        if not self.bounds['LOC3'] < currents[2] < self.bounds['LOC3']:
-            out_of_range.append('LOC3', currents[2])
-        if not self.bounds['LOC4'] < currents[3] < self.bounds['LOC4']:
-            out_of_range.append('LOC4', currents[3])
-        
+    		currents.append(self.code2current(self.data[pair[0]], self.data[pair[1]], pair[0]))
+		#check if currents in bounds
+    	if not self.bounds['CC1'][0] < currents[0] < self.bounds['CC1'][1]
+			out_of_range.append(('CC1', currents[0]))
+		if not self.bounds['CC2'][0] < currents[1] < self.bounds['CC2'][1]
+			out_of_range.append(('CC2', currents[1]))
+		if not self.bounds['CC3'][0] < currents[2] < self.bounds['CC3'][1]
+			out_of_range.append(('CC3', currents[2]))
+		if not self.bounds['CC4'][0] < currents[3] < self.bounds['CC4'][1]
+			out_of_range.append(('CC4', currents[3]))
+		if not self.bounds['LCC1'][0] < currents[4] < self.bounds['LCC1'][1]
+			out_of_range.append(('LCC1', currents[4]))
+			
+
         #return errors if they exist
         if len(out_of_range) > 0:
             return out_of_range
     	return 0
-
-
-
+	def FPGAconfig(self, *):
