@@ -107,7 +107,8 @@ def alarms(data, config, old_counter):
                     clock_cycles_since_reset is 0 if no error, int with other number if else,
                     oStatus is tbd]
 	"""
-
+	if old_counter == None:
+		old_counter = 0
 	diagnostics = errorDetect.AlarmRaiser(data, old_counter, config)
 	return diagnostics
 
@@ -176,9 +177,11 @@ def slaveOperationMode(m, handle, opt, config, connection, commands):
 		handle:
 		opt:
 	"""
+	old_counter = None
 	while True:
 		data = readTelemetry(m) #Read relevant data on RPi and Devices
-		diagnostics = alarms(data) #Check if system is in working conditions according to reading status fla
+		diagnostics = alarms(data, old_counter, config) #Check if system is in working conditions according to reading status flags
+		old_counter = data['FRC'] #Set old counter to # clock cycles last read
 		updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
 		errorHandle(diagnostics, handle, opt) #Handle errors
 

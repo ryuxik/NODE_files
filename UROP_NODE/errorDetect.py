@@ -1,4 +1,4 @@
-import ConfigParser
+
 """
 This is to test the currents of devices during the alarms section of the cotrol code.
 It reports errors when devices are not cosuming the current they should be consuming.
@@ -10,8 +10,8 @@ class AlarmRaiser(object):
     This class holds the necessary methods to raise alarms during the alarms section of the control code.
     It checks for correct current consumption, correct clock cycle count, and if optimization is needed.
     """
-	def __init__(self, data, old_counter):
-        self.bounds = self.setup()
+	def __init__(self, data, old_counter, config):
+        self.bounds = self.setup(config)
         self.old_counter = old_counter
         self.data = data
 
@@ -28,9 +28,7 @@ class AlarmRaiser(object):
         currents_result = self.checkCurrents()
         clock_cycles_result = self.clockCyclesSinceReset()
         o_status = self.optStatus()
-        self.end()
         return [currents_result, clock_cycles_result, o_status]
-        #return [currents_result, o_status]
 
     def setup(self):
         """
@@ -41,12 +39,10 @@ class AlarmRaiser(object):
             (Tester, bounds(dict)): object necessary for other functions and dict with current bounds for each device to be checked
         """
         ##FIX
-        Config = ConfigParser.RawConfigParser()
-        Config.read('args.ini')
         bounds = {} #this dictionary holds the locations to be tested along with their respective bounds for acceptable currents
-        opts = Config.options('CurrentBounds')
+        opts = config['CurrentBounds']
         for o in opts:
-        	bounds[o] = Config.get('CurrentBounds', o)
+        	bounds[o] = config['CurrentBounds'][o]
         return bounds
 
     def optStatus(self):
