@@ -1,8 +1,4 @@
-The final framework will be structured as 4 separate processes. 
+The final framework will be structured as 2 separate processes. 
 
 - One process will be in charge of camera tracking and FSM control. 
-- Another process will take care of SER optimization. 
-- The third process will be the main control loop, which will be very similar to the one already in place. 
-- The fourth process will handle changing the USB switches so that the RPI will be configured as either a slave for normal operation or as a host for software updates. 
-
-There will be interprocess communication between the four using threading and semaphores to allow for concurrency to ensure for correct process scheduling during system calls to meet any latency constraints.
+- Another process will take care of SER optimization, the main control loop, and changing the USB switches so that the RPI will be configured as either a slave for normal operation or as a host for software updates. 

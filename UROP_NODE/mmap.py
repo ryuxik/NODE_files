@@ -1,6 +1,6 @@
 """
 @Author: Santiago Munoz
-@Date: 6/20/2017
+@Date: 8/2/2017
 
 	This is to test the comm to the FPGA using the memmory map. Assumes that PFGA board is Nero and Comm capable.
 """
@@ -21,12 +21,10 @@ class Tester(object):
 	"""
 	Tester class to send and read from FPGA registers following the memmory map
 	"""
-	def __init__(self, old_vid_pid, new_vid_pid):
-		Config = ConfigParser.ConfigParser()
-    	Config.read('args.ini')
-		self.old_vid_pid = Config.get('ConnectionInfo', 'fpga_old_vid_pid')
-		self.new_vid_pid = Config.get('ConnectionInfo', 'fpga_new_vid_pid')
-		self.handle = self.start()
+	def __init__(self, config, handle):
+		self.old_vid_pid = config['ConnectionInfo']['fpga_old_vid_pid']
+		self.new_vid_pid = config['ConnectionInfo']['fpga_new_vid_pid']
+		self.handle = handle
 		self.on_code = 0x55
 		self.off_code = 0x0F
 		#format is id(6 bits?), address(1 byte), r/w (ro = 0b00, rw = 0b11), value = (varies)
@@ -105,20 +103,6 @@ class Tester(object):
 							'TE6a': (114,'ro'), 'TE6b': (115,'ro'), 'LTMa': (116,'ro'), 'LTMb': (117,'ro')
 							}
 
-	def start(self):
-		"""
-		Opens connection to FPGA board, and loads it with standard firmware.
-
-		Returns:
-			(handle): id representing fpga board
-		"""
-
-		fl.flInitialise(0)
-		fl.flLoadStandardFirmware(old_vid_pid, new_vid_pid)
-		time.sleep(3) #this should be fl.flAwaitDevice(), but according to past contributor, it didn't work
-		handle = fl.flOpen(self.new_vid_pid)
-		return handle
-
 	def getAddress(self, name):
 		"""
 		Gets addresss of given name
@@ -142,16 +126,6 @@ class Tester(object):
 		"""
 
 		return self.addresses[name][1]
-
-	def end(self):
-		"""
-		Closes connection to FPGA board.
-
-		Args:
-			fpga(NodeFPGA): object representing fpga board
-		"""
-
-		fl.flClose(self.handle) 
 
 	def test_read(self, channel, expected):
 		"""
@@ -206,31 +180,26 @@ class Tester(object):
 		#but the idea should be similar to this
 		return self.test_read(channel, data)
 
-	def test(self, progConfig):
-		"""
-		Main function to test reading and writing data to and from various addresses on the FPGA board
+	# def test(self, progConfig):
+	# 	"""
+	# 	Main function to test reading and writing data to and from various addresses on the FPGA board
 
-		Args:
-			progConfig(): file to configure FPGA board
-		Returns:
-			res(list): list containig reports of passed and failed tests
-		"""
+	# 	Args:
+	# 		progConfig(): file to configure FPGA board
+	# 	Returns:
+	# 		res(list): list containig reports of passed and failed tests
+	# 	"""
 		
-		res = []
-		ro = [(key, val[0]) for key in self.addresses for val in self.addresses[key] if val[1] == 'ro'] #creates tuples of read only locs with addr, (;NAME', addr)
-		rw = [(key, val[0]) for key in self.addresses for val in self.addresses[key] if val[1] == 'rw'] #creates tuples of read/write locs with addr, ('NAME', addr)
+	# 	res = []
+	# 	ro = [(key, val[0]) for key in self.addresses for val in self.addresses[key] if val[1] == 'ro'] #creates tuples of read only locs with addr, (;NAME', addr)
+	# 	rw = [(key, val[0]) for key in self.addresses for val in self.addresses[key] if val[1] == 'rw'] #creates tuples of read/write locs with addr, ('NAME', addr)
 		
-
-		#implement tests using memmory map here and append results in correct format to res to be passed to RPI_a_test
-		fl.flProgram(self.handle, progConfig)
-		#fl.flLoadStandardFirmware(self.fpga.handle, progConfig)
-		if fl.IsFPGARunning(self.handle):
-			pass
-			#need to check all mem map locs and either test rw or ro
-			#then append ('P', 'Pass report'), or ('F', 'Fail report') to res
-
-		self.end()
-		return res
+	# 	#fl.flLoadStandardFirmware(self.fpga.handle, progConfig)
+	# 	if fl.IsFPGARunning(self.handle):
+	# 		pass
+	# 		#need to check all mem map locs and either test rw or ro
+	# 		#then append ('P', 'Pass report'), or ('F', 'Fail report') to res
+	# 	return res
 
 
 # :d

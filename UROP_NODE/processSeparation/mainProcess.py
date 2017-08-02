@@ -199,7 +199,7 @@ def controlLoop():
 
 	fpga, handle, opt = configControl.openComm() #opens connection and returns fpga, handle, and optimizer objects
 	config = prepDict('args.ini')
-	m = mmap.Tester(config) #Fix Tester class to take config
+	m = mmap.Tester(config, handle) #Fix Tester class to take config
 	commands = prepDict('commandChecker.ini')
 	connection = busComm.Connection(
 									config['ConnectionInfo']['plBus_vid'], config['ConnectionInfo']['plBus_pid'],
