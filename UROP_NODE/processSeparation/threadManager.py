@@ -21,10 +21,10 @@ if __name__ == '__main__':
 	#setting up Processes
 	##need to test if we can run camFSM stuff all the time concurrently with main
 	##figure out what to do with default arg to controlLoop 
-	m = Process(target=controlLoop, args=(lock, event))
-	o = Process(target=op, args=(lock,))
+	m = Process(name='controlLoop',target=controlLoop, args=(lock, event))
+	o = Process(name='optimization',target=op, args=(lock,))
 	#fix this
-	c = Process(target=???, args=(camFSMevent,))
+	c = Process(name='camFSM',target=???, args=(camFSMevent,))
 
 	m.start()
 	o.start()

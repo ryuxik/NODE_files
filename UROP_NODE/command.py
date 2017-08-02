@@ -189,7 +189,6 @@ def errorHandle(diagnostics):
 			if attempt != None:
 				is_awake = True
 				configControl.closeComm(attempt[1])
-		main()
 
 	if diagnostics[2][0]: #checks if optimization is needed, may need more conditions to actually run optimization.
 		optimize(diagnostics[2][1])
@@ -233,5 +232,5 @@ General Notes:
 	Need to figure out how to communicate with PL Bus as slave, how to handle interrupts. Check if there is a FIFO at bus to act as buffer if data is received during control
 	loop or if an immediate interrupt is required to handle incoming data without loss.
 
-	ONdrejs loop will always be running
+	The only tasks that can feasibly be made paralle are reading and updating info received from planet lab and the rest of everything.
 """
