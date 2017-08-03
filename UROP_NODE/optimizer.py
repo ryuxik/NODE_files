@@ -3,7 +3,6 @@
 import fl
 import time
 import math as m
-import ConfigParser
 from datetime import datetime
 from mmap import tester
 
@@ -11,15 +10,12 @@ from mmap import tester
 class Optimizer(object):
 
     """ Class Initiation """
-    def __init__(self, handle, fpga):
+    def __init__(self, handle, fpga, config):
         self.handle = handle
         self.fpga = fpga
-
-        c = ConfigParser.RawConfigParser()
-        c.read('args.ini')
-        i = c.get('ConnectionInfo', 'fpga_old_vid_pid')
-        p = c.get('ConnectionInfo', 'fpga_new_vid_pid')
-        self.mem_map = Tester(i, p) 
+        i = config['ConnectionInfo']['fpga_old_vid_pid']
+        p = config['ConnectionInfo']['fpga_new_vid_pid']
+        self.mem_map = Tester(config, handle) 
 
         #Initiate TEC seed laser operating point parameters
         self.temp = 0
@@ -29,6 +25,8 @@ class Optimizer(object):
         self.delta_T = 0
         self.delta_C = 0
     
+    def getMemMap(self):
+        return self.mem_map
     """ get functions (check present TEC seed laser operating point) """
 
     def getTemp(self):

@@ -18,45 +18,49 @@ def interrupt(config, connection, commands):
 		connection(Connection): Connection object to represent link to PL Bus
 		commands(dict): dict with mode to valid command map from commandChecker.ini
 	"""
-	data_from_bus = connection.updateReceived()
-	valid = False
+	data_from_bus = connection.updateReceived() #reads incoming info, stores it in the connection object, and returns the info
+	valid = False #boolean value to check if the command received from PL is valid in the current mode of operation
+	#iterates through configuration dictionary to find the current operating mode
 	for option in config['ModeSettings']:
 		b = config['ModeSettings'][option]
 		if b:
 			mode = b
 			break
-
-	##need to check if data is valid command, then set valid to true
+	
 	##implement something here to pull command from data_from_bus
 	#command = process(data_from_bus)
 	command = 'foo'
+
+	#checks if the command is valid in the current mode
 	if command in commands[mode]:
 		valid = True
-	#need to change the format of data_from_bus
-	##implement switch here
-	#if command is switch
-		#switch()
-		#masterOperationMode()
+	
+	#executes valid commands in this section
 	if valid:
-		#figure out what to do with the valid command received
-		#setValues(data_from_bus) #Set values according to data received
+		##implement switch here
+		#if command is switch
+			#switch()
+			#masterOperationMode()
+		#else:
+			#figure out what to do with the valid command received
+			#setValues(data_from_bus) #Set values according to data received
 
 def prepDict(file):
 	"""
-	Create dictionary of dicts, each dict represents a section of the args.ini file.
+	Create dictionary of dicts, each dict represents a section of whatever .ini file is given.
 	
 	Args:
-		file(string): name of file to read
+		file(string): name of .ini file to read
 
 	Returns:
-		master(dict): dictionary representation of file
+		master(dict): dictionary representation of the .ini file
 	"""
 
 	#read file
 	c = ConfigParser.RawConfigParser()
 	c.read(file)
 
-	#creates master dict representation of args.ini file
+	#creates master dict representation of .ini file
 	master = {}
 	for section in c.sections():
 		temp = {}
@@ -107,9 +111,10 @@ def alarms(data, config, old_counter):
                     clock_cycles_since_reset is 0 if no error, int with other number if else,
                     oStatus is tbd]
 	"""
+	#initially the clock count should be 0
 	if old_counter == None:
 		old_counter = 0
-	diagnostics = errorDetect.AlarmRaiser(data, old_counter, config)
+	diagnostics = errorDetect.AlarmRaiser(data, old_counter, config, m) #Creates AlarmRaiser object which returns diagnostics report
 	return diagnostics
 
 def readTelemetry(m):
@@ -117,13 +122,13 @@ def readTelemetry(m):
 	Reads all addresses from memory map and stores data in dictionary
 	
 	Args:
-		t(Tester): memmory map object used to read from locations
+		m(Tester): memmory map object used to read from locations
 
 	Returns:
 		data(dict): memory map location name to data read
 	"""
 
-    data = t.readAll()
+    data = m.readAll() #the memmory map object reads all locations and returns the data
     return data
 
 def updateTelemetry(data, diagnostics):
@@ -151,22 +156,21 @@ def errorHandle(diagnostics, handle, opt):
 
 	Args:
 		diagnostics(list): list containing error reports
-		handle: 
-		opt: 
+		handle(): An opaque reference to an internal structure representing the connection to the FPGA
+		opt(Optimizer): Object that handles optimization algorithm controls
 	"""
 	
 	if diagnostics[0] != 0: #a device is taking too much current #list should be locations, PO1 PO2 PO3 PO4
 		#switch off any device drawing too much power
-		for loc in diagnostics[0]: #power each device off
+		for loc in diagnostics[0]:
 			configControl.powerOff(handle, loc)
 
 	if diagnostics[1] != 0: #connection to the FPGA may have been lost
-		controlLoop()
+		controlLoop() #start up the connection again and make the necesary objects
 
 	if diagnostics[2][0]: #checks if optimization is needed, may need more conditions to actually run optimization.
-		#assumes optimization object has already been created (opt).
 		obs_length = 1 #constant that will be decided in the future, 1 might work fine
-		opt.scan_mode(obs_length) #may need to still add condition to this function, but don't need two separate functions
+		opt.scan_mode(obs_length) #may need to still add condition to this function
 		
 def slaveOperationMode(m, handle, opt, config, connection, commands):
 	"""
@@ -174,13 +178,13 @@ def slaveOperationMode(m, handle, opt, config, connection, commands):
 
 	Args:
 		m(Tester): memmory map object
-		handle:
-		opt:
+		handle(): An opaque reference to an internal structure representing the connection to the FPGA
+		opt(Optimizer): Object that handles optimization algorithm controls
 	"""
 	old_counter = None
 	while True:
 		data = readTelemetry(m) #Read relevant data on RPi and Devices
-		diagnostics = alarms(data, old_counter, config) #Check if system is in working conditions according to reading status flags
+		diagnostics = alarms(data, old_counter, config, m) #Check if system is in working conditions according to reading status flags
 		old_counter = data['FRC'] #Set old counter to # clock cycles last read
 		updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
 		errorHandle(diagnostics, handle, opt) #Handle errors
@@ -199,11 +203,11 @@ def controlLoop():
 	"""
 	Main control loop for NODE, this may be modified depending on the satellite's mode in the future.
 	"""
-
-	fpga, handle, opt = configControl.openComm() #opens connection and returns fpga, handle, and optimizer objects
-	config = prepDict('args.ini')
-	m = mmap.Tester(config, handle) #Fix Tester class to take config
-	commands = prepDict('commandChecker.ini')
+	config = prepDict('args.ini') #creates the config dictionary
+	fpga, handle, opt = configControl.openComm(config) #opens connection to FPGA and returns NODEFPGA, handle, and Optimizer objects
+	m = opt.getMemMap() #Returns the Tester object created by Optimizer object
+	commands = prepDict('commandChecker.ini') #creates the commands dictionary
+	#opens connection to PL Bus and returns onject to handle it
 	connection = busComm.Connection(
 									config['ConnectionInfo']['plBus_vid'], config['ConnectionInfo']['plBus_pid'],
 									config['ConnectionInfo']['plBus_packet_size'], config['ConnectionInfo']['plBus_timeout'],

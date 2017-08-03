@@ -240,7 +240,7 @@ def readSPI(handle, channels):
     rxl = fl.flReadChannel(handle, LSB_channel)
     return [rxm, rxl]
 
-def openComm():
+def openComm(config):
     argList = getArgs()
     handle = fl.FLHandle()
     try:
@@ -259,7 +259,7 @@ def openComm():
         fl.flSelectConduit(handle, 1)
         if isCommCapable and fl.flIsFPGARunning(handle):
             fpga = NodeFPGA(handle)
-            return (fpga, handle, Optimizer(handle, fpga))
+            return (fpga, handle, Optimizer(handle, fpga, config))
         else:
             return None #open comm failed
 
