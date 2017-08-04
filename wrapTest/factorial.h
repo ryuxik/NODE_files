@@ -1,2 +1,2 @@
 
-int factorial(int X);
+long int factorial(int X);

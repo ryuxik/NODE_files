@@ -25,15 +25,15 @@ static PyObject *factorial_factorial(PyObject *self, PyObject *args)
 	int X;
 
 	/*Parse the input tuple */
-	if (!PyArg_ParseTuple(args, "i", &X))
+	if (!PyArg_ParseTuple(args, "l", &X))
 		return NULL;
 
 	/*Call the external C function to compute the factorial. */
 	//Py_BEGIN_ALLOW_THREADS;
-	int value = factorial(X);
+	long int value = factorial(X);
 	//Py_END_ALLOW_THREADS;
 
 	/* Build the output tuple. */
-	PyObject *ret = Py_BuildValue("i", value);
+	PyObject *ret = Py_BuildValue("l", value);
 	return ret;
 }

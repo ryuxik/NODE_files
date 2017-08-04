@@ -14,15 +14,16 @@ def f(x):
 
 if __name__ == '__main__':
 	
-	h = 15
+	h = 20
 	for i in range(1, h):
 		a = f(i)
 		b = _factorial.factorial(i)
 		if a != b:
 			print a, b, 'at: ',i
 			break
-	# py = w(f, h)
-	# print(timeit.timeit(py, number=1))
+	print a, b
+	py = w(f, h)
+	print(timeit.timeit(py, number=1))
 
-	# c = w(_factorial.factorial, h)
-	# print(timeit.timeit(c, number=1))
+	c = w(_factorial.factorial, h)
+	print(timeit.timeit(c, number=1))
