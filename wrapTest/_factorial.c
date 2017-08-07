@@ -29,11 +29,9 @@ static PyObject *factorial_factorial(PyObject *self, PyObject *args)
 		return NULL;
 
 	/*Call the external C function to compute the factorial. */
-	//Py_BEGIN_ALLOW_THREADS;
-	long int value = factorial(X);
-	//Py_END_ALLOW_THREADS;
-
-	/* Build the output tuple. */
-	PyObject *ret = Py_BuildValue("l", value);
+	Py_BEGIN_ALLOW_THREADS;
+	factorial(X);
+	Py_END_ALLOW_THREADS;
+	PyObject *ret = Py_BuildValue("i", 0);
 	return ret;
 }

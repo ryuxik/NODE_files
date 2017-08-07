@@ -1,2 +1,2 @@
-
-long int factorial(int X);
+#include <stdio.h>
+int factorial(int X);

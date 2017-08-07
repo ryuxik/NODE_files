@@ -10,18 +10,15 @@ def f(x):
 	a = 1
 	for i in range(1,x+1):
 		a *= i
-	return a
+	print a
 
 if __name__ == '__main__':
 	
-	h = 20
+	h = 21
 	for i in range(1, h):
-		a = f(i)
-		b = _factorial.factorial(i)
-		if a != b:
-			print a, b, 'at: ',i
-			break
-	print a, b
+		f(i)
+		_factorial.factorial(i)
+		
 	py = w(f, h)
 	print(timeit.timeit(py, number=1))
 
