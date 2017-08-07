@@ -183,14 +183,28 @@ def slaveOperationMode(m, handle, opt, config, connection, commands):
 	"""
 	old_counter = None
 	while True:
-		data = readTelemetry(m) #Read relevant data on RPi and Devices
-		diagnostics = alarms(data, old_counter, config, m) #Check if system is in working conditions according to reading status flags
+		try:
+			data = readTelemetry(m) #Read relevant data from FPGA
+		except:
+			raise RuntimeError('Failed to read telemetry from FGPA.')
+		try:
+			diagnostics = alarms(data, old_counter, config, m) #Check if system is in working conditions according to reading status flags
+		except:
+			raise RuntimeError('Failed to produce diagnostics report.')
 		old_counter = data['FRC'] #Set old counter to # clock cycles last read
-		updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
-		errorHandle(diagnostics, handle, opt) #Handle errors
-
+		try:
+			updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
+		except:
+			raise RuntimeError('Failed to update telemetry.')
+		try:
+			errorHandle(diagnostics, handle, opt) #Handle errors
+		except:
+			raise RuntimeError('Failed to handle errors.')
 		#if there is information incoming from PL
-		interrupt(config, connection, commands) #Read incoming data from PL Bus
+		try:
+			interrupt(config, connection, commands) #Read incoming data from PL Bus
+		except:
+			raise('Failed to read data from PL.')
 
 def masterOperationMode():
 	"""
@@ -203,20 +217,26 @@ def controlLoop():
 	"""
 	Main control loop for NODE, this may be modified depending on the satellite's mode in the future.
 	"""
-	config = prepDict('args.ini') #creates the config dictionary
-	fpga, handle, opt = configControl.openComm(config) #opens connection to FPGA and returns NODEFPGA, handle, and Optimizer objects
-	m = opt.getMemMap() #Returns the Tester object created by Optimizer object
-	commands = prepDict('commandChecker.ini') #creates the commands dictionary
-	#opens connection to PL Bus and returns onject to handle it
-	connection = busComm.Connection(
-									config['ConnectionInfo']['plBus_vid'], config['ConnectionInfo']['plBus_pid'],
-									config['ConnectionInfo']['plBus_packet_size'], config['ConnectionInfo']['plBus_timeout'],
-									config['ConnectionInfo']['plBus_wendpoint'], config['ConnectionInfo']['plBus_rendpoint'])
+	try:
+		config = prepDict('args.ini') #creates the config dictionary
+		fpga, handle, opt = configControl.openComm(config) #opens connection to FPGA and returns NODEFPGA, handle, and Optimizer objects
+		m = opt.getMemMap() #Returns the Tester object created by Optimizer object
+		commands = prepDict('commandChecker.ini') #creates the commands dictionary
+		#opens connection to PL Bus and returns onject to handle it
+		connection = busComm.Connection(
+										config['ConnectionInfo']['plBus_vid'], config['ConnectionInfo']['plBus_pid'],
+										config['ConnectionInfo']['plBus_packet_size'], config['ConnectionInfo']['plBus_timeout'],
+										config['ConnectionInfo']['plBus_wendpoint'], config['ConnectionInfo']['plBus_rendpoint'])
 
+	except:
+		raise RuntimeError('Failed to create all objects needed for NODE operation.')
 	#implement check for slave or master operation mode here
 
 	#slave operation mode
 	#if slave:
-	slaveOperationMode(m, handle, opt, config, connection, commands)
+	try:
+		slaveOperationMode(m, handle, opt, config, connection, commands)
+	except:
+		controlLoop()
 
 	

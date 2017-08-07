@@ -135,4 +135,6 @@ class AlarmRaiser(object):
         if len(out_of_range) > 0:
             return out_of_range
     	return 0
-	def FPGAconfig(self, *):
+	
+    def FPGAconfig(self, *):
+        pass

@@ -27,6 +27,7 @@ class Optimizer(object):
     
     def getMemMap(self):
         return self.mem_map
+        
     """ get functions (check present TEC seed laser operating point) """
 
     def getTemp(self):

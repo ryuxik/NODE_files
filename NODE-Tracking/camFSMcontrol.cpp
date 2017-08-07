@@ -18,7 +18,7 @@
 atomic<bool> stop(false);
 
 //-----------------------------------------------------------------------------
-int main()
+int mainLoop()
 //-----------------------------------------------------------------------------
 {
 	// Synchronization
@@ -332,3 +332,8 @@ int main()
 	return 0;
 }
 
+BOOST_PYTHON_MODULE(camFSMcontrol) {
+	using namespace boost::python;
+
+	def("mainLoop", mainLoop);
+}
