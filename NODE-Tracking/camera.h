@@ -2,7 +2,7 @@
 // Author: Ondrej Cierny
 #ifndef __CAMERA
 #define __CAMERA
-#include <mvIMPACT_CPP/mvIMPACT_acquire.h>
+#include "mvIMPACT_CPP/mvIMPACT_acquire.h"
 
 #define CAMERA_WIDTH 2592
 #define CAMERA_HEIGHT 1944

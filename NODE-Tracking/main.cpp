@@ -104,7 +104,7 @@ int main()
 					currentExposure = camera.config->expose_us.read();
 					beaconGain = camera.config->gain_dB.read();
 					calibGain = calibration.gainForExposure(currentExposure);
-					log(std::cout, "Acquistion complete:", currentExposure, "us ; beacon:", 
+					log(std::cout, "Acquistion complete:", currentExposure, "us ; beacon:",
 						beaconGain, "dB smoothing", track.beaconSmoothing, "; calib:",
 						calibGain, "dB smoothing", calibration.smoothing);
 					// Set initial pointing in open-loop
@@ -331,4 +331,3 @@ int main()
 
 	return 0;
 }
-	
