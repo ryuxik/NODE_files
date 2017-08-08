@@ -1,5 +1,5 @@
 """
-This is pseudocode trying to follow Rodrigo's sketch of how we will first approach the sat control
+This is the main NODE control process.
 """
 import errorDetect
 import mmap
@@ -7,6 +7,7 @@ import busComm
 import ConfigParser
 import optimizer
 import configControl
+import logging
 from usbSwitch import switch
 
 def interrupt(config, connection, commands):
@@ -162,13 +163,16 @@ def errorHandle(diagnostics, handle, opt):
 	
 	if diagnostics[0] != 0: #a device is taking too much current #list should be locations, PO1 PO2 PO3 PO4
 		#switch off any device drawing too much power
+		logging.info('Device(s) is(are) drawing too much power.')
 		for loc in diagnostics[0]:
 			configControl.powerOff(handle, loc)
 
 	if diagnostics[1] != 0: #connection to the FPGA may have been lost
+		logging.info('Connection to FPGA was lost, re-starting cotrol setup.')
 		controlLoop() #start up the connection again and make the necesary objects
 
 	if diagnostics[2][0]: #checks if optimization is needed, may need more conditions to actually run optimization.
+		logging.info('Optimization of SER was needed.')
 		obs_length = 1 #constant that will be decided in the future, 1 might work fine
 		opt.scan_mode(obs_length) #may need to still add condition to this function
 		
@@ -185,26 +189,31 @@ def slaveOperationMode(m, handle, opt, config, connection, commands):
 	while True:
 		try:
 			data = readTelemetry(m) #Read relevant data from FPGA
+			logging.info('Data from FPGA was read and stored.')
 		except:
-			raise RuntimeError('Failed to read telemetry from FGPA.')
+			logging.info('Failed to read telemetry from FGPA.')
 		try:
 			diagnostics = alarms(data, old_counter, config, m) #Check if system is in working conditions according to reading status flags
+			logging.info('Generated system diagnostics report from data read.')
 		except:
-			raise RuntimeError('Failed to produce diagnostics report.')
+			logging.info('Failed to produce diagnostics report.')
 		old_counter = data['FRC'] #Set old counter to # clock cycles last read
 		try:
 			updateTelemetry(data, diagnostics) #Updates file holding all information which PL will be reading
+			logging.info('Updated telemetry file.')
 		except:
-			raise RuntimeError('Failed to update telemetry.')
+			logging.info('Failed to update telemetry.')
 		try:
 			errorHandle(diagnostics, handle, opt) #Handle errors
+			logging.info('Errors were resolved.')
 		except:
-			raise RuntimeError('Failed to handle errors.')
+			logging.info('Failed to handle errors.')
 		#if there is information incoming from PL
 		try:
 			interrupt(config, connection, commands) #Read incoming data from PL Bus
+			logging.info('Incoming data was read and processed.')
 		except:
-			raise('Failed to read data from PL.')
+			logging.info('Failed to read data from PL.')
 
 def masterOperationMode():
 	"""
@@ -218,25 +227,33 @@ def controlLoop():
 	Main control loop for NODE, this may be modified depending on the satellite's mode in the future.
 	"""
 	try:
+		logging.basicConfig(format='%(levelname)s:%(message)s:%(asctime)s', filename='mainProcess.log', level=logging.INFO) #sets up logger
 		config = prepDict('args.ini') #creates the config dictionary
+		logging.info('Created the configuration dictionary.')
 		fpga, handle, opt = configControl.openComm(config) #opens connection to FPGA and returns NODEFPGA, handle, and Optimizer objects
+		logging.info('Opened the connection to the FPGA and created NODEFPGA, handle, and Optimizer objects.')
 		m = opt.getMemMap() #Returns the Tester object created by Optimizer object
+		logging.info('Created the Tester object using the Optimizer object.')
 		commands = prepDict('commandChecker.ini') #creates the commands dictionary
+		logging.info('Created the command checker dictionary.')
 		#opens connection to PL Bus and returns onject to handle it
 		connection = busComm.Connection(
 										config['ConnectionInfo']['plBus_vid'], config['ConnectionInfo']['plBus_pid'],
 										config['ConnectionInfo']['plBus_packet_size'], config['ConnectionInfo']['plBus_timeout'],
 										config['ConnectionInfo']['plBus_wendpoint'], config['ConnectionInfo']['plBus_rendpoint'])
+		logging.info('Opened the connection to the PL Bus.')
 
 	except:
-		raise RuntimeError('Failed to create all objects needed for NODE operation.')
+		logging.info('Failed to create all objects needed for NODE operation.')
 	#implement check for slave or master operation mode here
 
 	#slave operation mode
 	#if slave:
 	try:
+		logging.info('Entering slave operation mode.')
 		slaveOperationMode(m, handle, opt, config, connection, commands)
 	except:
+		logging.info('Something failed, restarting setup for control.')
 		controlLoop()
 
 	
