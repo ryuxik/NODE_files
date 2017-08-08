@@ -227,7 +227,7 @@ def controlLoop():
 	Main control loop for NODE, this may be modified depending on the satellite's mode in the future.
 	"""
 	try:
-		logging.basicConfig(format='%(levelname)s:%(message)s:%(asctime)s', filename='mainProcess.log', level=logging.INFO) #sets up logger
+		logging.basicConfig(format='%(asctime)s:%(message)s:', filename='mainProcess.log', level=logging.INFO) #sets up logger
 		config = prepDict('args.ini') #creates the config dictionary
 		logging.info('Created the configuration dictionary.')
 		fpga, handle, opt = configControl.openComm(config) #opens connection to FPGA and returns NODEFPGA, handle, and Optimizer objects
